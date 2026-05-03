@@ -1,25 +1,54 @@
-use bson::{doc, oid::ObjectId, DateTime as BsonDt};
-use chrono::{DateTime, Duration, FixedOffset, TimeZone, Timelike, Utc};
-use mongodb::Collection;
-use serde::{Deserialize, Serialize};
+use chrono::{Duration, FixedOffset, TimeZone, Timelike, Utc};
+use serde::Deserialize;
+use surrealdb::sql::{Datetime as Sdt, Thing};
 
 use crate::models::{Football, FootballLine, FootballOver, FootballsResult, PageInfo};
 use crate::server::{category_db, db::get_db, topic_db};
 
-// ── BSON document types ────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+fn id_only(t: &Thing) -> String {
+    t.id.to_string()
+}
+
+fn record_id(table: &str, id: &str) -> String {
+    if id.contains(':') {
+        id.to_string()
+    } else {
+        format!("{}:{}", table, id)
+    }
+}
+
+// ── Datetime formatters ────────────────────────────────────────────────────────
+
+fn mdhm(dt: &Sdt) -> String {
+    dt.0.format("%m-%d %H:%M").to_string()
+}
+
+fn mdhm8(dt: &Sdt) -> String {
+    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
+    dt.0.with_timezone(&tz8).format("%m-%d %H:%M").to_string()
+}
+
+fn ymdhmsz8(dt: &Sdt) -> String {
+    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
+    dt.0.with_timezone(&tz8)
+        .format("%Y-%m-%d %H:%M:%S%:z")
+        .to_string()
+}
+
+// ── Doc structs ────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
-#[derive(Serialize)]
 struct FootballDoc {
-    #[serde(rename = "_id")]
-    id: ObjectId,
-    category_id: ObjectId,
+    id: Thing,
+    category_id: String,
     season: String,
     home_team: String,
     away_team: String,
-    kick_off_at: BsonDt,
-    created_at: BsonDt,
-    updated_at: BsonDt,
+    kick_off_at: Sdt,
+    created_at: Sdt,
+    updated_at: Sdt,
     #[serde(default)]
     hits: i64,
     #[serde(default)]
@@ -29,57 +58,60 @@ struct FootballDoc {
 
 #[derive(Debug, Deserialize)]
 struct FootballLineDoc {
-    #[serde(rename = "_id")]
-    id: ObjectId,
+    id: Thing,
     win: String,
     draw: String,
     loss: String,
     kind: u8,
-    created_at: BsonDt,
+    created_at: Sdt,
 }
 
 #[derive(Debug, Deserialize)]
 struct FootballOverDoc {
-    #[serde(rename = "_id")]
-    id: ObjectId,
+    id: Thing,
     s: String,
     wdl: String,
     tg: String,
     gd: String,
     kind: u8,
-    created_at: BsonDt,
+    created_at: Sdt,
 }
 
-// ── Datetime helpers ───────────────────────────────────────────────────────────
-
-fn mdhm(bdt: BsonDt) -> String {
-    let dt: DateTime<Utc> = bdt.into();
-    dt.format("%m-%d %H:%M").to_string()
+#[derive(Debug, Deserialize)]
+struct CountResult {
+    count: u64,
 }
 
-fn mdhm8(bdt: BsonDt) -> String {
-    let dt: DateTime<Utc> = bdt.into();
-    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
-    dt.with_timezone(&tz8).format("%m-%d %H:%M").to_string()
-}
-
-fn ymdhmsz8(bdt: BsonDt) -> String {
-    let dt: DateTime<Utc> = bdt.into();
-    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
-    dt.with_timezone(&tz8).format("%Y-%m-%d %H:%M:%S%:z").to_string()
+#[derive(Debug, Deserialize)]
+struct IdOnly {
+    id: Thing,
 }
 
 // ── Conversions ────────────────────────────────────────────────────────────────
 
 fn line_into(d: FootballLineDoc) -> FootballLine {
-    FootballLine { id: d.id.to_hex(), win: d.win, draw: d.draw, loss: d.loss, kind: d.kind, created_at: ymdhmsz8(d.created_at) }
+    FootballLine {
+        id: id_only(&d.id),
+        win: d.win,
+        draw: d.draw,
+        loss: d.loss,
+        kind: d.kind,
+        created_at: ymdhmsz8(&d.created_at),
+    }
 }
 
 fn over_into(d: FootballOverDoc) -> FootballOver {
-    FootballOver { id: d.id.to_hex(), s: d.s, wdl: d.wdl, tg: d.tg, gd: d.gd, kind: d.kind, created_at: ymdhmsz8(d.created_at) }
+    FootballOver {
+        id: id_only(&d.id),
+        s: d.s,
+        wdl: d.wdl,
+        tg: d.tg,
+        gd: d.gd,
+        kind: d.kind,
+        created_at: ymdhmsz8(&d.created_at),
+    }
 }
 
-/// Return [first, last] pair — or fewer items if < 2 available.
 fn il_pair<T: Clone>(v: Vec<T>) -> Vec<T> {
     match v.len() {
         0 => vec![],
@@ -88,50 +120,56 @@ fn il_pair<T: Clone>(v: Vec<T>) -> Vec<T> {
     }
 }
 
-// ── Internal fetch helpers ─────────────────────────────────────────────────────
+// ── Internal fetchers ──────────────────────────────────────────────────────────
 
-async fn fetch_lines(fid: ObjectId, kind: u8) -> Result<Vec<FootballLine>, String> {
-    let coll: Collection<FootballLineDoc> = get_db().collection("footballs_lines");
-    let mut cur = coll.find(doc! { "football_id": fid, "kind": kind as i32 }).sort(doc! { "created_at": 1 }).await.map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? {
-        out.push(line_into(cur.deserialize_current().map_err(|e| e.to_string())?));
-    }
-    Ok(out)
+async fn fetch_lines(fid: &str, kind: u8) -> Result<Vec<FootballLine>, String> {
+    let rid = record_id("footballs", fid);
+    let mut res = get_db()
+        .query("SELECT * FROM footballs_lines WHERE football_id = $fid AND kind = $kind ORDER BY created_at ASC")
+        .bind(("fid", rid))
+        .bind(("kind", kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<FootballLineDoc> = res.take(0).map_err(|e| e.to_string())?;
+    Ok(docs.into_iter().map(line_into).collect())
 }
 
-async fn fetch_overs(fid: ObjectId, kind: u8) -> Result<Vec<FootballOver>, String> {
-    let coll: Collection<FootballOverDoc> = get_db().collection("footballs_overs");
-    let mut cur = coll.find(doc! { "football_id": fid, "kind": kind as i32 }).sort(doc! { "created_at": 1 }).await.map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? {
-        out.push(over_into(cur.deserialize_current().map_err(|e| e.to_string())?));
-    }
-    Ok(out)
+async fn fetch_overs(fid: &str, kind: u8) -> Result<Vec<FootballOver>, String> {
+    let rid = record_id("footballs", fid);
+    let mut res = get_db()
+        .query("SELECT * FROM footballs_overs WHERE football_id = $fid AND kind = $kind ORDER BY created_at ASC")
+        .bind(("fid", rid))
+        .bind(("kind", kind))
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<FootballOverDoc> = res.take(0).map_err(|e| e.to_string())?;
+    Ok(docs.into_iter().map(over_into).collect())
 }
+
+// ── Enrich ─────────────────────────────────────────────────────────────────────
 
 async fn enrich(doc: FootballDoc) -> Result<Football, String> {
-    let fid = doc.id;
-    let lines    = fetch_lines(fid, 0).await?;
-    let calcs    = fetch_overs(fid, 0).await?;
-    let officials = fetch_overs(fid, 1).await?;
-    let topics   = topic_db::get_topics_by_football_id(&fid.to_hex()).await?;
-    let category = category_db::get_category_by_id(&doc.category_id.to_hex()).await?;
+    let fid = id_only(&doc.id);
+    let lines = fetch_lines(&fid, 0).await?;
+    let calcs = fetch_overs(&fid, 0).await?;
+    let officials = fetch_overs(&fid, 1).await?;
+    let topics = topic_db::get_topics_by_football_id(&fid).await?;
+    let category = category_db::get_category_by_id(&doc.category_id).await?;
 
     Ok(Football {
-        id: fid.to_hex(),
-        category_id: doc.category_id.to_hex(),
+        id: fid,
+        category_id: doc.category_id,
         season: doc.season,
         home_team: doc.home_team,
         away_team: doc.away_team,
-        kick_off_at_mdhm:  mdhm(doc.kick_off_at),
-        kick_off_at_mdhm8: mdhm8(doc.kick_off_at),
-        created_at: ymdhmsz8(doc.created_at),
-        updated_at: ymdhmsz8(doc.updated_at),
-        hits:  doc.hits.max(0) as u64,
+        kick_off_at_mdhm: mdhm(&doc.kick_off_at),
+        kick_off_at_mdhm8: mdhm8(&doc.kick_off_at),
+        created_at: ymdhmsz8(&doc.created_at),
+        updated_at: ymdhmsz8(&doc.updated_at),
+        hits: doc.hits.max(0) as u64,
         stars: doc.stars.max(0) as u64,
         status: doc.status,
-        il_odds:      il_pair(lines),
+        il_odds: il_pair(lines),
         il_calc_over: il_pair(calcs),
         football_over: officials.into_iter().last(),
         category,
@@ -139,28 +177,34 @@ async fn enrich(doc: FootballDoc) -> Result<Football, String> {
     })
 }
 
-// ── Pagination helper ──────────────────────────────────────────────────────────
+// ── Pagination ─────────────────────────────────────────────────────────────────
 
 fn page_size() -> i64 {
-    std::env::var("PAGE_SIZE").ok().and_then(|s| s.parse().ok()).unwrap_or(12)
+    std::env::var("PAGE_SIZE")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(12)
 }
 
 fn make_page_info(from: i64, ps: i64, total: u64) -> PageInfo {
     let tp = ((total as f64 / ps as f64).ceil() as u32).max(1);
     PageInfo {
         current_page: from as u32,
-        total_pages:  tp,
-        total_count:  total,
+        total_pages: tp,
+        total_count: total,
         first_cursor: String::new(),
-        last_cursor:  String::new(),
+        last_cursor: String::new(),
         has_previous: from > 1,
-        has_next:     (from as u32) < tp,
+        has_next: (from as u32) < tp,
     }
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
-pub async fn get_footballs_in_position(position: &str, limit: i64) -> Result<Vec<Football>, String> {
+pub async fn get_footballs_in_position(
+    position: &str,
+    limit: i64,
+) -> Result<Vec<Football>, String> {
     let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
     let now_utc = Utc::now();
     let now8 = now_utc.with_timezone(&tz8);
@@ -168,140 +212,220 @@ pub async fn get_footballs_in_position(position: &str, limit: i64) -> Result<Vec
     let day_off = match position {
         "jt" => -cutoff,
         "zt" => -(cutoff + 1),
-        _    => return Err("position must be 'jt' or 'zt'".into()),
+        _ => return Err("position must be 'jt' or 'zt'".into()),
     };
 
-    let target  = now8.date_naive() + Duration::days(day_off);
-    let start_l = tz8.from_local_datetime(&target.and_hms_opt(11, 0, 0).unwrap()).single().ok_or("ambiguous datetime")?;
-    let end_l   = start_l + Duration::days(1);
+    let target = now8.date_naive() + Duration::days(day_off);
+    let start_l = tz8
+        .from_local_datetime(&target.and_hms_opt(11, 0, 0).unwrap())
+        .single()
+        .ok_or("ambiguous datetime")?;
+    let end_l = start_l + Duration::days(1);
 
-    let start_bdt = BsonDt::from_chrono(start_l.with_timezone(&Utc));
-    let end_bdt   = BsonDt::from_chrono(end_l.with_timezone(&Utc));
+    let start_utc = start_l.with_timezone(&Utc);
+    let end_utc = end_l.with_timezone(&Utc);
 
-    let coll: Collection<FootballDoc> = get_db().collection("footballs");
-    let mut cur = coll
-        .find(doc! { "kick_off_at": { "$gte": start_bdt, "$lt": end_bdt }, "status": { "$gte": 0i32 } })
-        .sort(doc! { "kick_off_at": -1, "updated_at": -1 })
-        .limit(limit)
+    let mut res = get_db()
+        .query("SELECT * FROM footballs WHERE kick_off_at >= $start AND kick_off_at < $end AND status >= 0 ORDER BY kick_off_at DESC LIMIT $limit")
+        .bind(("start", start_utc))
+                .bind(("end", end_utc))
+        .bind(("limit", limit))
         .await
         .map_err(|e| e.to_string())?;
-
-    let mut docs = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? {
-        docs.push(cur.deserialize_current().map_err(|e| e.to_string())?);
-    }
+    let docs: Vec<FootballDoc> = res.take(0).map_err(|e| e.to_string())?;
     let mut out = Vec::new();
-    for d in docs { out.push(enrich(d).await?); }
+    for d in docs {
+        out.push(enrich(d).await?);
+    }
     Ok(out)
 }
 
 pub async fn get_football_by_id(id: &str) -> Result<Option<Football>, String> {
-    let oid  = ObjectId::parse_str(id).map_err(|e| e.to_string())?;
-    let coll: Collection<FootballDoc> = get_db().collection("footballs");
-    match coll.find_one(doc! { "_id": oid }).await.map_err(|e| e.to_string())? {
+    let bare = if id.contains(':') { id.split(':').nth(1).unwrap_or(id) } else { id };
+    let doc: Option<FootballDoc> = get_db()
+        .select(("footballs", bare))
+        .await
+        .map_err(|e| e.to_string())?;
+    match doc {
         Some(d) => Ok(Some(enrich(d).await?)),
-        None    => Ok(None),
+        None => Ok(None),
     }
 }
 
 pub async fn get_random_football_id() -> Result<Option<String>, String> {
-    let coll = get_db().collection::<bson::Document>("footballs");
-    let pipeline = vec![
-        doc! { "$match": { "status": { "$gte": 1i32 } } },
-        doc! { "$sample": { "size": 1i32 } },
-        doc! { "$project": { "_id": 1i32 } },
-    ];
-    let mut cur = coll.aggregate(pipeline).await.map_err(|e| e.to_string())?;
-    if cur.advance().await.map_err(|e| e.to_string())? {
-        if let Ok(id) = cur.current().get_object_id("_id") {
-            return Ok(Some(id.to_hex()));
-        }
+    let mut res = get_db()
+        .query("SELECT id FROM footballs WHERE status >= 1 ORDER BY rand() LIMIT 1")
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<IdOnly> = res.take(0).map_err(|e| e.to_string())?;
+    Ok(docs.into_iter().next().map(|d| id_only(&d.id)))
+}
+
+pub async fn get_footballs(
+    from: i64,
+    status_min: i8,
+    status_max: i8,
+) -> Result<FootballsResult, String> {
+    let ps = page_size();
+    // Count
+    let mut cres = get_db()
+        .query("SELECT count() FROM footballs WHERE status >= $min AND status <= $max GROUP ALL")
+        .bind(("min", status_min))
+        .bind(("max", status_max))
+        .await
+        .map_err(|e| e.to_string())?;
+    let counts: Vec<CountResult> = cres.take(0).map_err(|e| e.to_string())?;
+    let total = counts.into_iter().next().map(|c| c.count).unwrap_or(0);
+    let skip = ((from - 1) * ps).max(0);
+
+    let mut res = get_db()
+        .query("SELECT * FROM footballs WHERE status >= $min AND status <= $max ORDER BY kick_off_at DESC, updated_at DESC LIMIT $ps START $skip")
+        .bind(("min", status_min))
+        .bind(("max", status_max))
+        .bind(("ps", ps))
+        .bind(("skip", skip))
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<FootballDoc> = res.take(0).map_err(|e| e.to_string())?;
+    let mut items = Vec::new();
+    for d in docs {
+        items.push(enrich(d).await?);
     }
-    Ok(None)
+    Ok(FootballsResult {
+        page_info: make_page_info(from, ps, total),
+        items,
+    })
 }
 
-pub async fn get_footballs(from: i64, status_min: i8, status_max: i8) -> Result<FootballsResult, String> {
-    let ps   = page_size();
-    let coll: Collection<FootballDoc> = get_db().collection("footballs");
-    let filt = doc! { "status": { "$gte": status_min as i32, "$lte": status_max as i32 } };
-    let total = coll.count_documents(filt.clone()).await.map_err(|e| e.to_string())?;
-    let skip  = ((from - 1) * ps).max(0) as u64;
-    let mut cur = coll.find(filt).sort(doc! { "kick_off_at": -1, "updated_at": -1 }).skip(skip).limit(ps).await.map_err(|e| e.to_string())?;
-    let mut docs = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? { docs.push(cur.deserialize_current().map_err(|e| e.to_string())?); }
-    let mut items = Vec::new();
-    for d in docs { items.push(enrich(d).await?); }
-    Ok(FootballsResult { page_info: make_page_info(from, ps, total), items })
-}
+pub async fn get_footballs_by_category(
+    category_id: &str,
+    from: i64,
+) -> Result<FootballsResult, String> {
+    let cid = record_id("categories", category_id);
+    let ps = page_size();
 
-pub async fn get_footballs_by_category(category_id: &str, from: i64) -> Result<FootballsResult, String> {
-    let cid  = ObjectId::parse_str(category_id).map_err(|e| e.to_string())?;
-    let ps   = page_size();
-    let coll: Collection<FootballDoc> = get_db().collection("footballs");
-    let filt = doc! { "category_id": cid, "status": { "$gte": 1i32 } };
-    let total = coll.count_documents(filt.clone()).await.map_err(|e| e.to_string())?;
-    let skip  = ((from - 1) * ps).max(0) as u64;
-    let mut cur = coll.find(filt).sort(doc! { "kick_off_at": -1, "updated_at": -1 }).skip(skip).limit(ps).await.map_err(|e| e.to_string())?;
-    let mut docs = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? { docs.push(cur.deserialize_current().map_err(|e| e.to_string())?); }
+    let mut cres = get_db()
+        .query("SELECT count() FROM footballs WHERE category_id = $cid AND status >= 1 GROUP ALL")
+        .bind(("cid", cid.clone()))
+        .await
+        .map_err(|e| e.to_string())?;
+    let counts: Vec<CountResult> = cres.take(0).map_err(|e| e.to_string())?;
+    let total = counts.into_iter().next().map(|c| c.count).unwrap_or(0);
+    let skip = ((from - 1) * ps).max(0);
+
+    let mut res = get_db()
+        .query("SELECT * FROM footballs WHERE category_id = $cid AND status >= 1 ORDER BY kick_off_at DESC, updated_at DESC LIMIT $ps START $skip")
+        .bind(("cid", cid))
+        .bind(("ps", ps))
+        .bind(("skip", skip))
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<FootballDoc> = res.take(0).map_err(|e| e.to_string())?;
     let mut items = Vec::new();
-    for d in docs { items.push(enrich(d).await?); }
-    Ok(FootballsResult { page_info: make_page_info(from, ps, total), items })
+    for d in docs {
+        items.push(enrich(d).await?);
+    }
+    Ok(FootballsResult {
+        page_info: make_page_info(from, ps, total),
+        items,
+    })
 }
 
 pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<FootballsResult, String> {
-    let tid = ObjectId::parse_str(topic_id).map_err(|e| e.to_string())?;
-    let db  = get_db();
+    let tid = record_id("topics", topic_id);
+    let ps = page_size();
 
-    #[derive(Deserialize)]
-    struct Rel { football_id: Option<ObjectId> }
-    let rel: Collection<Rel> = db.collection("topics_relevant");
-    let mut cur = rel.find(doc! { "topic_id": tid, "football_id": { "$exists": true } }).await.map_err(|e| e.to_string())?;
-    let mut fids: Vec<ObjectId> = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? {
-        let r = cur.deserialize_current().map_err(|e| e.to_string())?;
-        if let Some(fid) = r.football_id { if !fids.contains(&fid) { fids.push(fid); } }
+    // Fetch distinct football_ids linked to this topic
+    let mut rel_res = get_db()
+        .query("SELECT VALUE football_id FROM topics_relevant WHERE topic_id = $tid AND football_id IS NOT NONE")
+        .bind(("tid", tid))
+        .await
+        .map_err(|e| e.to_string())?;
+    let raw_ids: Vec<String> = rel_res.take(0).map_err(|e| e.to_string())?;
+
+    // Deduplicate
+    let mut fids: Vec<String> = Vec::new();
+    for id in raw_ids {
+        if !fids.contains(&id) {
+            fids.push(id);
+        }
     }
 
-    let ps    = page_size();
     let total = fids.len() as u64;
-    let skip  = ((from - 1) * ps).max(0) as usize;
-    let page_fids: Vec<ObjectId> = fids.into_iter().skip(skip).take(ps as usize).collect();
+    let skip = ((from - 1) * ps).max(0) as usize;
+    let page_fids: Vec<String> = fids.into_iter().skip(skip).take(ps as usize).collect();
 
-    let coll: Collection<FootballDoc> = db.collection("footballs");
-    let mut cur = coll.find(doc! { "_id": { "$in": page_fids }, "status": { "$gte": 1i32 } }).sort(doc! { "kick_off_at": -1 }).await.map_err(|e| e.to_string())?;
-    let mut docs = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? { docs.push(cur.deserialize_current().map_err(|e| e.to_string())?); }
+    if page_fids.is_empty() {
+        return Ok(FootballsResult {
+            page_info: make_page_info(from, ps, total),
+            items: vec![],
+        });
+    }
+
+    // Build IN list (ids are already record-id strings like "footballs:xxx")
+    let id_list: Vec<String> = page_fids.iter().map(|id| format!("'{}'", id)).collect();
+    let q = format!(
+        "SELECT * FROM footballs WHERE id IN [{}] AND status >= 1 ORDER BY kick_off_at DESC",
+        id_list.join(",")
+    );
+
+    let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
+    let docs: Vec<FootballDoc> = res.take(0).map_err(|e| e.to_string())?;
     let mut items = Vec::new();
-    for d in docs { items.push(enrich(d).await?); }
-    Ok(FootballsResult { page_info: make_page_info(from, ps, total), items })
+    for d in docs {
+        items.push(enrich(d).await?);
+    }
+    Ok(FootballsResult {
+        page_info: make_page_info(from, ps, total),
+        items,
+    })
 }
 
 pub async fn get_footballs_admin(from: i64) -> Result<FootballsResult, String> {
-    let ps   = page_size();
-    let coll: Collection<FootballDoc> = get_db().collection("footballs");
-    let total = coll.count_documents(doc! {}).await.map_err(|e| e.to_string())?;
-    let skip  = ((from - 1) * ps).max(0) as u64;
-    let mut cur = coll.find(doc! {}).sort(doc! { "updated_at": -1 }).skip(skip).limit(ps).await.map_err(|e| e.to_string())?;
-    let mut docs = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? { docs.push(cur.deserialize_current().map_err(|e| e.to_string())?); }
+    let ps = page_size();
+
+    let mut cres = get_db()
+        .query("SELECT count() FROM footballs GROUP ALL")
+        .await
+        .map_err(|e| e.to_string())?;
+    let counts: Vec<CountResult> = cres.take(0).map_err(|e| e.to_string())?;
+    let total = counts.into_iter().next().map(|c| c.count).unwrap_or(0);
+    let skip = ((from - 1) * ps).max(0);
+
+    let mut res = get_db()
+        .query("SELECT * FROM footballs ORDER BY updated_at DESC LIMIT $ps START $skip")
+        .bind(("ps", ps))
+        .bind(("skip", skip))
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<FootballDoc> = res.take(0).map_err(|e| e.to_string())?;
     let mut items = Vec::new();
-    for d in docs { items.push(enrich(d).await?); }
-    Ok(FootballsResult { page_info: make_page_info(from, ps, total), items })
+    for d in docs {
+        items.push(enrich(d).await?);
+    }
+    Ok(FootballsResult {
+        page_info: make_page_info(from, ps, total),
+        items,
+    })
 }
 
 pub async fn update_football_status(id: &str, status: i8) -> Result<(), String> {
-    let oid = ObjectId::parse_str(id).map_err(|e| e.to_string())?;
-    get_db().collection::<bson::Document>("footballs")
-        .update_one(doc! { "_id": oid }, doc! { "$set": { "status": status as i32, "updated_at": BsonDt::now() } })
-        .await.map_err(|e| e.to_string())?;
+    let rid = record_id("footballs", id);
+    get_db()
+        .query("UPDATE $rid SET status = $status, updated_at = time::now()")
+        .bind(("rid", rid))
+        .bind(("status", status))
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
 pub async fn increment_hits(id: &str) -> Result<(), String> {
-    let oid = ObjectId::parse_str(id).map_err(|e| e.to_string())?;
-    get_db().collection::<bson::Document>("footballs")
-        .update_one(doc! { "_id": oid }, doc! { "$inc": { "hits": 1i64 } })
-        .await.map_err(|e| e.to_string())?;
+    let rid = record_id("footballs", id);
+    get_db()
+        .query("UPDATE $rid SET hits += 1")
+        .bind(("rid", rid))
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(())
 }

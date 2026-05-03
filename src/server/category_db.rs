@@ -1,55 +1,66 @@
-use bson::{doc, oid::ObjectId};
-use mongodb::Collection;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::models::Category;
 use crate::server::db::get_db;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct CategoryDoc {
-    #[serde(rename = "_id")]
-    id: ObjectId,
+    id: surrealdb::sql::Thing,
     name: NameDoc,
     level: u8,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct NameDoc {
     zh: String,
     en: String,
 }
 
+fn id_only(t: &surrealdb::sql::Thing) -> String {
+    t.id.to_string()
+}
+
 fn into_category(d: CategoryDoc) -> Category {
-    Category { id: d.id.to_hex(), name_zh: d.name.zh, name_en: d.name.en, level: d.level }
+    Category {
+        id: id_only(&d.id),
+        name_zh: d.name.zh,
+        name_en: d.name.en,
+        level: d.level,
+    }
 }
 
 pub async fn get_categories() -> Result<Vec<Category>, String> {
-    let coll: Collection<CategoryDoc> = get_db().collection("categories");
-    let mut cur = coll.find(doc! {}).sort(doc! { "level": 1 }).await.map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? {
-        out.push(into_category(cur.deserialize_current().map_err(|e| e.to_string())?));
-    }
-    Ok(out)
+    let mut res = get_db()
+        .query("SELECT * FROM categories ORDER BY level ASC")
+        .await
+        .map_err(|e| e.to_string())?;
+    let docs: Vec<CategoryDoc> = res.take(0).map_err(|e| e.to_string())?;
+    Ok(docs.into_iter().map(into_category).collect())
 }
 
 pub async fn get_category_by_id(id: &str) -> Result<Option<Category>, String> {
-    let oid = ObjectId::parse_str(id).map_err(|e| e.to_string())?;
-    let coll: Collection<CategoryDoc> = get_db().collection("categories");
-    Ok(coll.find_one(doc! { "_id": oid }).await.map_err(|e| e.to_string())?.map(into_category))
+    let bare = if id.contains(':') {
+        id.split(':').nth(1).unwrap_or(id)
+    } else {
+        id
+    };
+    let doc: Option<CategoryDoc> = get_db()
+        .select(("categories", bare))
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(doc.map(into_category))
 }
 
 pub async fn get_categories_by_levels(levels: &[u8]) -> Result<Vec<Category>, String> {
-    let bson_lvls: Vec<bson::Bson> = levels.iter().map(|l| bson::Bson::Int32(*l as i32)).collect();
-    let coll: Collection<CategoryDoc> = get_db().collection("categories");
-    let mut cur = coll
-        .find(doc! { "level": { "$in": bson_lvls } })
-        .sort(doc! { "level": 1 })
-        .await
-        .map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    while cur.advance().await.map_err(|e| e.to_string())? {
-        out.push(into_category(cur.deserialize_current().map_err(|e| e.to_string())?));
+    if levels.is_empty() {
+        return Ok(vec![]);
     }
-    Ok(out)
+    let lvls: Vec<String> = levels.iter().map(|l| l.to_string()).collect();
+    let q = format!(
+        "SELECT * FROM categories WHERE level IN [{}] ORDER BY level ASC",
+        lvls.join(",")
+    );
+    let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
+    let docs: Vec<CategoryDoc> = res.take(0).map_err(|e| e.to_string())?;
+    Ok(docs.into_iter().map(into_category).collect())
 }

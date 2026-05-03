@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
+use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::{
     components::{Route, Router, Routes},
     path,
@@ -85,22 +85,24 @@ pub fn App() -> impl IntoView {
         <Title text="BiPou – Football Calculation"/>
 
         <I18nContextProvider>
-            <Router>
-                <Routes fallback=|| view! { <NotFound/> }>
-                    <Route path=path!("/")                    view=HomePage/>
-                    <Route path=path!("/register")            view=RegisterPage/>
-                    <Route path=path!("/sign-in")             view=SignInPage/>
-                    <Route path=path!("/sign-out")            view=SignOutPage/>
-                    <Route path=path!("/footballs")           view=FootballsPage/>
-                    <Route path=path!("/footballs/:id")       view=FootballDetailPage/>
-                    <Route path=path!("/users")               view=UsersPage/>
-                    <Route path=path!("/users/:username")     view=UserProfilePage/>
-                    <Route path=path!("/users/:id/activate")  view=UserActivatePage/>
-                    <Route path=path!("/admin")               view=AdminPage/>
-                    <Route path=path!("/admin/footballs")     view=AdminFootballsPage/>
-                    <Route path=path!("/admin/football/:id")  view=AdminFootballDetailPage/>
-                </Routes>
-            </Router>
+            <Suspense fallback=|| view! { <p class="p-4 text-center">"Loading..."</p> }>
+                <Router>
+                    <Routes fallback=|| view! { <NotFound/> }>
+                        <Route path=path!("/")                    view=HomePage/>
+                        <Route path=path!("/register")            view=RegisterPage/>
+                        <Route path=path!("/sign-in")             view=SignInPage/>
+                        <Route path=path!("/sign-out")            view=SignOutPage/>
+                        <Route path=path!("/footballs")           view=FootballsPage/>
+                        <Route path=path!("/footballs/:id")       view=FootballDetailPage/>
+                        <Route path=path!("/users")               view=UsersPage/>
+                        <Route path=path!("/users/:username")     view=UserProfilePage/>
+                        <Route path=path!("/users/:id/activate")  view=UserActivatePage/>
+                        <Route path=path!("/admin")               view=AdminPage/>
+                        <Route path=path!("/admin/footballs")     view=AdminFootballsPage/>
+                        <Route path=path!("/admin/football/:id")  view=AdminFootballDetailPage/>
+                    </Routes>
+                </Router>
+            </Suspense>
         </I18nContextProvider>
     }
 }
