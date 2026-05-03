@@ -1,0 +1,87 @@
+[package]
+name = "football_site"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+leptos       = { version = "0.8" }
+leptos_meta  = { version = "0.8" }
+leptos_router = { version = "0.8" }
+leptos_i18n  = { version = "0.6" }
+serde        = { version = "1", features = ["derive"] }
+chrono       = { version = "0.4", features = ["serde"] }
+
+# hydrate-only
+console_error_panic_hook = { version = "0.1", optional = true }
+wasm-bindgen             = { version = "0.2",  optional = true }
+
+# ssr-only
+axum          = { version = "0.8",  optional = true }
+leptos_axum   = { version = "0.8",  optional = true }
+tokio         = { version = "1",    features = ["full"], optional = true }
+tower-http    = { version = "0.6",  features = ["fs"],   optional = true }
+mongodb       = { version = "3.4",  optional = true }
+bson          = { version = "2",    features = ["chrono-0_4"], optional = true }
+serde_json    = { version = "1",    optional = true }
+jsonwebtoken  = { version = "10",   optional = true }
+ring          = { version = "0.17", optional = true }
+base64        = { version = "0.22", optional = true }
+lettre        = { version = "0.11", default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "builder"], optional = true }
+dotenvy       = { version = "0.15", optional = true }
+regex         = { version = "1",    optional = true }
+pulldown-cmark = { version = "0.13", optional = true }
+
+[build-dependencies]
+leptos_i18n_build = "0.6"
+
+[features]
+hydrate = [
+    "leptos/hydrate",
+    "leptos_i18n/hydrate",
+    "dep:console_error_panic_hook",
+    "dep:wasm-bindgen",
+]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "leptos_i18n/axum",
+    "dep:axum",
+    "dep:leptos_axum",
+    "dep:tokio",
+    "dep:tower-http",
+    "dep:mongodb",
+    "dep:bson",
+    "dep:serde_json",
+    "dep:jsonwebtoken",
+    "dep:ring",
+    "dep:base64",
+    "dep:lettre",
+    "dep:dotenvy",
+    "dep:regex",
+    "dep:pulldown-cmark",
+]
+
+[profile.wasm-release]
+inherits      = "release"
+opt-level     = "z"
+lto           = true
+codegen-units = 1
+panic         = "abort"
+
+[package.metadata.leptos]
+output-name          = "football_site"
+site-root            = "target/site"
+site-pkg-dir         = "pkg"
+style-file           = "style/main.scss"
+assets-dir           = "public"
+site-addr            = "127.0.0.1:3000"
+reload-port          = 3001
+bin-features         = ["ssr"]
+bin-default-features = false
+lib-features         = ["hydrate"]
+lib-default-features = false
+lib-profile-release  = "wasm-release"
