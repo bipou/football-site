@@ -12,25 +12,21 @@ leptos_meta  = { version = "0.8" }
 leptos_router = { version = "0.8" }
 leptos_i18n  = { version = "0.6" }
 serde        = { version = "1.0", features = ["derive"] }
-chrono       = { version = "0.4", features = ["serde"] }
-
+chrono       = { version = "0.4", features = ["serde"], optional = true }
 # hydrate-only
 console_error_panic_hook = { version = "0.1", optional = true }
 wasm-bindgen             = { version = "0.2",  optional = true }
-
 # ssr-only
 axum          = { version = "0.8",  optional = true }
 leptos_axum   = { version = "0.8",  optional = true }
 tokio         = { version = "1.0",  features = ["full"], optional = true }
 tower-http    = { version = "0.6",  features = ["fs"],   optional = true }
-surrealdb     = { version = "2.6", features = ["protocol-ws", "protocol-http"], optional = true }
-serde_json    = { version = "1.0",  optional = true }
+surrealdb     = { version = "3.0", features = ["protocol-ws"], optional = true }
 jsonwebtoken  = { version = "10.0", optional = true }
 ring          = { version = "0.17", optional = true }
 base64        = { version = "0.22", optional = true }
 lettre        = { version = "0.11", default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "builder"], optional = true }
 dotenvy       = { version = "0.15", optional = true }
-regex         = { version = "1.0",  optional = true }
 pulldown-cmark = { version = "0.13", optional = true }
 
 [build-dependencies]
@@ -53,13 +49,12 @@ ssr = [
     "dep:tokio",
     "dep:tower-http",
     "dep:surrealdb",
-    "dep:serde_json",
     "dep:jsonwebtoken",
     "dep:ring",
     "dep:base64",
+    "dep:chrono",
     "dep:lettre",
     "dep:dotenvy",
-    "dep:regex",
     "dep:pulldown-cmark",
 ]
 

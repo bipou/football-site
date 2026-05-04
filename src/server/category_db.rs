@@ -1,28 +1,27 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use crate::utils::common;
+use surrealdb::types::{RecordId, SurrealValue};
 
 use crate::models::Category;
 use crate::server::db::get_db;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct CategoryDoc {
-    id: surrealdb::sql::Thing,
+    id: RecordId,
     name: NameDoc,
     level: u8,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct NameDoc {
     zh: String,
     en: String,
 }
 
-fn id_only(t: &surrealdb::sql::Thing) -> String {
-    t.id.to_string()
-}
 
 fn into_category(d: CategoryDoc) -> Category {
     Category {
-        id: id_only(&d.id),
+        id: common::id_only(&d.id),
         name_zh: d.name.zh,
         name_en: d.name.en,
         level: d.level,

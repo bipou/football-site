@@ -1,30 +1,12 @@
-use chrono::{FixedOffset, Utc};
+use crate::utils::common;
 use serde::Deserialize;
-use surrealdb::sql::{Datetime, Thing};
+use surrealdb::types::{Datetime, RecordId, SurrealValue};
 
-use crate::models::{AuthUser, PageInfo, User, UserSummary, UsersResult};
+use crate::models::{AuthUser, User, UserSummary, UsersResult};
 use crate::server::{auth as auth_mod, db::get_db, topic_db};
+use crate::utils::constant;
 
 // ── helpers ──────────────────────────────────────────────────────────────
-
-fn id_only(t: &Thing) -> String {
-    t.id.to_string()
-}
-
-fn record_id(table: &str, id: &str) -> String {
-    if id.contains(':') {
-        id.to_string()
-    } else {
-        format!("{}:{}", table, id)
-    }
-}
-
-fn fmt8(dt: &Datetime) -> String {
-    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
-    dt.0.with_timezone(&tz8)
-        .format("%Y-%m-%d %H:%M:%S%:z")
-        .to_string()
-}
 
 fn render_md(md: &str) -> String {
     use pulldown_cmark::{Options, Parser, html};
@@ -37,43 +19,11 @@ fn render_md(md: &str) -> String {
     out
 }
 
-fn page_size() -> i64 {
-    std::env::var("PAGE_SIZE")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(12)
-}
-
-fn make_page_info(from: i64, ps: i64, total: u64) -> PageInfo {
-    let tp = ((total as f64 / ps as f64).ceil() as u32).max(1);
-    PageInfo {
-        current_page: from as u32,
-        total_pages: tp,
-        total_count: total,
-        first_cursor: String::new(),
-        last_cursor: String::new(),
-        has_previous: from > 1,
-        has_next: (from as u32) < tp,
-    }
-}
-
-fn esc(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('\'', "\\'")
-}
-
-fn now_utc() -> chrono::DateTime<Utc> {
-    Utc::now()
-}
-
-fn fmt_dt(dt: &chrono::DateTime<Utc>) -> String {
-    dt.format("%Y-%m-%dT%H:%M:%SZ").to_string()
-}
-
 // ── document structs ─────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 pub struct UserDoc {
-    id: Thing,
+    id: RecordId,
     username: String,
     email: String,
     cred: String,
@@ -95,7 +45,7 @@ pub struct UserDoc {
     status: i8,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct CountResult {
     count: u64,
 }
@@ -120,7 +70,7 @@ pub struct RegisterData {
 
 /// Paginated list of active users (status >= 1), newest first.
 pub async fn get_users(from: i64) -> Result<UsersResult, String> {
-    let ps = page_size();
+    let ps = constant::config().page_size;
     let skip = ((from - 1) * ps).max(0);
 
     // total count
@@ -140,7 +90,7 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
 
     let mut items = Vec::with_capacity(docs.len());
     for d in docs {
-        let uid = id_only(&d.id);
+        let uid = common::id_only(&d.id);
         let keywords = topic_db::get_keywords_by_user_id(&uid)
             .await
             .unwrap_or_default();
@@ -151,7 +101,7 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
             id: uid,
             username: d.username,
             nickname: d.nickname,
-            created_at: fmt8(&d.created_at),
+            created_at: common::ymdhmsz8(&d.created_at),
             status: d.status,
             keywords,
             topics,
@@ -159,7 +109,7 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
     }
 
     Ok(UsersResult {
-        page_info: make_page_info(from, ps, total),
+        page_info: common::make_page_info(from, ps, total),
         items,
     })
 }
@@ -167,18 +117,18 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
 /// Look up a single user by username, including keywords, topics, and
 /// rendered introduction HTML.
 pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String> {
-    let sql = format!(
-        "SELECT * FROM users WHERE username = '{}' LIMIT 1",
-        esc(username)
-    );
-    let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
+    let mut resp = get_db()
+        .query("SELECT * FROM users WHERE username = $username LIMIT 1")
+        .bind(("username", username.to_owned()))
+        .await
+        .map_err(|e| e.to_string())?;
     let docs: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
 
     let Some(d) = docs.into_iter().next() else {
         return Ok(None);
     };
 
-    let uid = id_only(&d.id);
+    let uid = common::id_only(&d.id);
     let keywords = topic_db::get_keywords_by_user_id(&uid)
         .await
         .unwrap_or_default();
@@ -198,8 +148,8 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
         website: d.website,
         introduction_html: render_md(&d.introduction),
         introduction: d.introduction,
-        created_at: fmt8(&d.created_at),
-        updated_at: fmt8(&d.updated_at),
+        created_at: common::ymdhmsz8(&d.created_at),
+        updated_at: common::ymdhmsz8(&d.updated_at),
         status: d.status,
         keywords,
         topics,
@@ -208,7 +158,7 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
 
 /// Raw user document lookup by id (accepts plain id or `users:xxx`).
 pub async fn get_user_doc_by_id(id: &str) -> Result<Option<UserDoc>, String> {
-    let rid = record_id("users", id);
+    let rid = common::record_id("users", id);
     let sql = format!("SELECT * FROM {rid}");
     let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
     let docs: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
@@ -218,19 +168,19 @@ pub async fn get_user_doc_by_id(id: &str) -> Result<Option<UserDoc>, String> {
 /// Authenticate by email or username + password.
 /// Returns `AuthUser` on success or a typed error string.
 pub async fn sign_in(signature: &str, password: &str) -> Result<AuthUser, String> {
-    let sql = if signature.contains('@') {
-        format!(
-            "SELECT * FROM users WHERE email = '{}' LIMIT 1",
-            esc(signature)
-        )
+    let mut resp = if signature.contains('@') {
+        get_db()
+            .query("SELECT * FROM users WHERE email = $sig LIMIT 1")
+            .bind(("sig", signature.to_owned()))
+            .await
     } else {
-        format!(
-            "SELECT * FROM users WHERE username = '{}' LIMIT 1",
-            esc(signature)
-        )
-    };
+        get_db()
+            .query("SELECT * FROM users WHERE username = $sig LIMIT 1")
+            .bind(("sig", signature.to_owned()))
+            .await
+    }
+    .map_err(|e| e.to_string())?;
 
-    let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
     let docs: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
 
     let user = docs
@@ -240,7 +190,12 @@ pub async fn sign_in(signature: &str, password: &str) -> Result<AuthUser, String
 
     match user.status {
         1..=10 => {}
-        0 => return Err(format!("sign_in_not_activation:{}", id_only(&user.id))),
+        0 => {
+            return Err(format!(
+                "sign_in_not_activation:{}",
+                common::id_only(&user.id)
+            ));
+        }
         -1 => return Err("sign_in_banned".to_string()),
         _ => return Err("sign_in_security_problem".to_string()),
     }
@@ -262,13 +217,10 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String, String
     let email = data.email.trim().to_lowercase();
 
     // uniqueness check
-    let check_sql = format!(
-        "SELECT count() FROM users WHERE username = '{}' OR email = '{}' GROUP ALL",
-        esc(&username),
-        esc(&email)
-    );
     let mut resp = get_db()
-        .query(&check_sql)
+        .query("SELECT count() FROM users WHERE username = $username OR email = $email GROUP ALL")
+        .bind(("username", username.clone()))
+        .bind(("email", email.clone()))
         .await
         .map_err(|e| e.to_string())?;
     let counts: Vec<CountResult> = resp.take(0).map_err(|e| e.to_string())?;
@@ -277,47 +229,41 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String, String
     }
 
     let cred = auth_mod::hash_credential(&username, &data.password);
-    let now = now_utc();
-    let now_str = fmt_dt(&now);
     let nickname = data.nickname.trim().to_string();
 
-    let insert_sql = format!(
-        "CREATE users CONTENT {{ \
-            username: '{}', \
-            email: '{}', \
-            cred: '{}', \
-            nickname: '{}', \
-            phone_number: '{}', \
-            phone_public: {}, \
-            im_account: '{}', \
-            im_public: {}, \
-            website: '{}', \
-            introduction: '{}', \
-            created_at: <datetime>'{}', \
-            updated_at: <datetime>'{}', \
-            status: 0 \
-        }}",
-        esc(&username),
-        esc(&email),
-        esc(&cred),
-        esc(&nickname),
-        esc(data.phone_number.trim()),
-        data.phone_public,
-        esc(data.im_account.trim()),
-        data.im_public,
-        esc(data.website.trim()),
-        esc(data.introduction.trim()),
-        now_str,
-        now_str,
-    );
-
     let mut resp = get_db()
-        .query(&insert_sql)
+        .query(
+            "CREATE users CONTENT { \
+                username: $username, \
+                email: $email, \
+                cred: $cred, \
+                nickname: $nickname, \
+                phone_number: $phone_number, \
+                phone_public: $phone_public, \
+                im_account: $im_account, \
+                im_public: $im_public, \
+                website: $website, \
+                introduction: $introduction, \
+                created_at: time::now(), \
+                updated_at: time::now(), \
+                status: 0 \
+            }",
+        )
+        .bind(("username", username.clone()))
+        .bind(("email", email.clone()))
+        .bind(("cred", cred))
+        .bind(("nickname", nickname.clone()))
+        .bind(("phone_number", data.phone_number.trim().to_owned()))
+        .bind(("phone_public", data.phone_public))
+        .bind(("im_account", data.im_account.trim().to_owned()))
+        .bind(("im_public", data.im_public))
+        .bind(("website", data.website.trim().to_owned()))
+        .bind(("introduction", data.introduction.trim().to_owned()))
         .await
         .map_err(|e| e.to_string())?;
     let created: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
     let user_doc = created.into_iter().next().ok_or("failed to create user")?;
-    let uid_str = id_only(&user_doc.id);
+    let uid_str = common::id_only(&user_doc.id);
 
     // optional topics
     if !data.topics.trim().is_empty() {
@@ -330,7 +276,7 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String, String
 
 /// Set status 0 → 1.  Returns the user's nickname if activation happened.
 pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
-    let rid = record_id("users", user_id);
+    let rid = common::record_id("users", user_id);
 
     let sql = format!("SELECT * FROM {rid}");
     let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
@@ -341,13 +287,9 @@ pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
     };
 
     if u.status == 0 {
-        let now_str = fmt_dt(&Utc::now());
-        let update_sql = format!(
-            "UPDATE {rid} SET status = 1, updated_at = <datetime>'{}'",
-            now_str
-        );
         get_db()
-            .query(&update_sql)
+            .query("UPDATE $rid SET status = 1, updated_at = time::now()")
+            .bind(("rid", rid))
             .await
             .map_err(|e| e.to_string())?;
     }

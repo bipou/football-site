@@ -153,9 +153,9 @@ pub fn FootballCard(football: Football) -> impl IntoView {
             <div class="flex items-center justify-between mt-3">
                 <div class="flex flex-wrap gap-1">
                     {f.topics.iter().map(|t| view! {
-                        <a href=format!("/topics/{}/footballs", t.id)
-                           class=BADGE_BLUE_NO_UL
-                        >{t.name.clone()}</a>
+                        <a href=format!("/footballs?filter=topic&fid={}", t.id)
+                                                   class=BADGE_BLUE_NO_UL
+                                                >{t.name.clone()}</a>
                     }).collect::<Vec<_>>()}
                 </div>
                 <span class="text-xs text-gray-400">{move || t!(i18n, football_hits)} {f.hits}</span>

@@ -1,47 +1,37 @@
+use crate::utils::common;
 use serde::Deserialize;
+use surrealdb::types::{RecordId, SurrealValue};
 
 use crate::models::Topic;
 use crate::server::db::get_db;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-fn id_only(t: &surrealdb::sql::Thing) -> String {
-    t.id.to_string()
-}
-
-fn record_id(table: &str, id: &str) -> String {
-    if id.contains(':') {
-        id.to_string()
-    } else {
-        format!("{}:{}", table, id)
-    }
-}
-
 // ── Document types ─────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct TopicDoc {
-    id: surrealdb::sql::Thing,
+    id: RecordId,
     name: String,
     quotes: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct RelTopicId {
-    topic_id: surrealdb::sql::Thing,
+    topic_id: RecordId,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 #[allow(dead_code)]
 struct RelId {
-    id: surrealdb::sql::Thing,
+    id: RecordId,
 }
 
 // ── Conversion ─────────────────────────────────────────────────────────────────
 
 fn into_topic(d: TopicDoc) -> Topic {
     Topic {
-        id: id_only(&d.id),
+        id: common::id_only(&d.id),
         name: d.name,
         quotes: d.quotes,
     }
@@ -55,15 +45,13 @@ pub async fn get_topic_by_id(id: &str) -> Result<Option<Topic>, String> {
     } else {
         id
     };
-    let doc: Option<TopicDoc> = get_db()
-        .select(("topics", bare))
-        .await
-        .map_err(|e| e.to_string())?;
+    let rid = RecordId::new("topics", bare);
+    let doc: Option<TopicDoc> = get_db().select(rid).await.map_err(|e| e.to_string())?;
     Ok(doc.map(into_topic))
 }
 
 pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, String> {
-    let fid = record_id("footballs", football_id);
+    let fid = common::record_id("footballs", football_id);
 
     // Collect distinct topic_id values where football_id is set
     let q = format!(
@@ -75,7 +63,7 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 
     let mut tids: Vec<String> = Vec::new();
     for r in &rels {
-        let tid = r.topic_id.to_string();
+        let tid = common::rid_str(&r.topic_id);
         if !tids.contains(&tid) {
             tids.push(tid);
         }
@@ -96,7 +84,7 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 }
 
 pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> {
-    let uid = record_id("users", user_id);
+    let uid = common::record_id("users", user_id);
 
     // Only topics where football_id is NONE (user's personal keywords)
     let q = format!(
@@ -108,7 +96,7 @@ pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String
 
     let mut tids: Vec<String> = Vec::new();
     for r in &rels {
-        let tid = r.topic_id.to_string();
+        let tid = common::rid_str(&r.topic_id);
         if !tids.contains(&tid) {
             tids.push(tid);
         }
@@ -129,7 +117,7 @@ pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String
 }
 
 pub async fn get_topics_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> {
-    let uid = record_id("users", user_id);
+    let uid = common::record_id("users", user_id);
 
     // All topics for the user (any football_id, including NONE)
     let q = format!(
@@ -141,7 +129,7 @@ pub async fn get_topics_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> 
 
     let mut tids: Vec<String> = Vec::new();
     for r in &rels {
-        let tid = r.topic_id.to_string();
+        let tid = common::rid_str(&r.topic_id);
         if !tids.contains(&tid) {
             tids.push(tid);
         }
@@ -170,34 +158,32 @@ pub async fn create_topics_from_names(names: &str) -> Result<Vec<String>, String
             continue;
         }
 
-        let escaped = name.replace('\\', "\\\\").replace('\'', "\\'");
-
         // Check if topic already exists
-        let select_sql = format!("SELECT * FROM topics WHERE name = '{}'", escaped);
         let mut res = get_db()
-            .query(&select_sql)
+            .query("SELECT * FROM topics WHERE name = $name")
+            .bind(("name", name.clone()))
             .await
             .map_err(|e| e.to_string())?;
         let docs: Vec<TopicDoc> = res.take(0).map_err(|e| e.to_string())?;
 
         if let Some(doc) = docs.first() {
             // Increment quotes on existing topic
-            let update_sql = format!("UPDATE {} SET quotes += 1", doc.id);
+            let update_sql = format!("UPDATE {} SET quotes += 1", common::rid_str(&doc.id));
             get_db()
                 .query(&update_sql)
                 .await
                 .map_err(|e| e.to_string())?;
-            ids.push(id_only(&doc.id));
+            ids.push(common::id_only(&doc.id));
         } else {
             // Create new topic
-            let create_sql = format!("CREATE topics CONTENT {{ name: '{}', quotes: 1 }}", escaped);
             let mut res = get_db()
-                .query(&create_sql)
+                .query("CREATE topics CONTENT { name: $name, quotes: 1 }")
+                .bind(("name", name.clone()))
                 .await
                 .map_err(|e| e.to_string())?;
             let new_docs: Vec<TopicDoc> = res.take(0).map_err(|e| e.to_string())?;
             if let Some(doc) = new_docs.first() {
-                ids.push(id_only(&doc.id));
+                ids.push(common::id_only(&doc.id));
             }
         }
     }
@@ -206,10 +192,10 @@ pub async fn create_topics_from_names(names: &str) -> Result<Vec<String>, String
 }
 
 pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Result<(), String> {
-    let uid = record_id("users", user_id);
+    let uid = common::record_id("users", user_id);
 
     for tid in &topic_ids {
-        let tid_full = record_id("topics", tid);
+        let tid_full = common::record_id("topics", tid);
 
         // Check if relation already exists (football_id = NONE for user keywords)
         let check_sql = format!(

@@ -1,47 +1,30 @@
+use crate::utils::common;
+use crate::utils::constant;
 use chrono::{Duration, FixedOffset, TimeZone, Timelike, Utc};
 use serde::Deserialize;
-use surrealdb::sql::{Datetime as Sdt, Thing};
+use surrealdb::types::{Datetime as Sdt, RecordId, SurrealValue};
 
-use crate::models::{Football, FootballLine, FootballOver, FootballsResult, PageInfo};
+use crate::models::{Football, FootballLine, FootballOver, FootballsResult};
 use crate::server::{category_db, db::get_db, topic_db};
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-fn id_only(t: &Thing) -> String {
-    t.id.to_string()
-}
-
-fn record_id(table: &str, id: &str) -> String {
-    if id.contains(':') {
-        id.to_string()
-    } else {
-        format!("{}:{}", table, id)
-    }
-}
-
 // ── Datetime formatters ────────────────────────────────────────────────────────
 
 fn mdhm(dt: &Sdt) -> String {
-    dt.0.format("%m-%d %H:%M").to_string()
+    dt.format("%m-%d %H:%M").to_string()
 }
 
 fn mdhm8(dt: &Sdt) -> String {
     let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
-    dt.0.with_timezone(&tz8).format("%m-%d %H:%M").to_string()
-}
-
-fn ymdhmsz8(dt: &Sdt) -> String {
-    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
-    dt.0.with_timezone(&tz8)
-        .format("%Y-%m-%d %H:%M:%S%:z")
-        .to_string()
+    dt.with_timezone(&tz8).format("%m-%d %H:%M").to_string()
 }
 
 // ── Doc structs ────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct FootballDoc {
-    id: Thing,
+    id: RecordId,
     category_id: String,
     season: String,
     home_team: String,
@@ -56,9 +39,9 @@ struct FootballDoc {
     status: i8,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct FootballLineDoc {
-    id: Thing,
+    id: RecordId,
     win: String,
     draw: String,
     loss: String,
@@ -66,9 +49,9 @@ struct FootballLineDoc {
     created_at: Sdt,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct FootballOverDoc {
-    id: Thing,
+    id: RecordId,
     s: String,
     wdl: String,
     tg: String,
@@ -77,38 +60,38 @@ struct FootballOverDoc {
     created_at: Sdt,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct CountResult {
     count: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, SurrealValue)]
 struct IdOnly {
-    id: Thing,
+    id: RecordId,
 }
 
 // ── Conversions ────────────────────────────────────────────────────────────────
 
 fn line_into(d: FootballLineDoc) -> FootballLine {
     FootballLine {
-        id: id_only(&d.id),
+        id: common::id_only(&d.id),
         win: d.win,
         draw: d.draw,
         loss: d.loss,
         kind: d.kind,
-        created_at: ymdhmsz8(&d.created_at),
+        created_at: common::ymdhmsz8(&d.created_at),
     }
 }
 
 fn over_into(d: FootballOverDoc) -> FootballOver {
     FootballOver {
-        id: id_only(&d.id),
+        id: common::id_only(&d.id),
         s: d.s,
         wdl: d.wdl,
         tg: d.tg,
         gd: d.gd,
         kind: d.kind,
-        created_at: ymdhmsz8(&d.created_at),
+        created_at: common::ymdhmsz8(&d.created_at),
     }
 }
 
@@ -123,7 +106,7 @@ fn il_pair<T: Clone>(v: Vec<T>) -> Vec<T> {
 // ── Internal fetchers ──────────────────────────────────────────────────────────
 
 async fn fetch_lines(fid: &str, kind: u8) -> Result<Vec<FootballLine>, String> {
-    let rid = record_id("footballs", fid);
+    let rid = common::record_id("footballs", fid);
     let mut res = get_db()
         .query("SELECT * FROM footballs_lines WHERE football_id = $fid AND kind = $kind ORDER BY created_at ASC")
         .bind(("fid", rid))
@@ -135,7 +118,7 @@ async fn fetch_lines(fid: &str, kind: u8) -> Result<Vec<FootballLine>, String> {
 }
 
 async fn fetch_overs(fid: &str, kind: u8) -> Result<Vec<FootballOver>, String> {
-    let rid = record_id("footballs", fid);
+    let rid = common::record_id("footballs", fid);
     let mut res = get_db()
         .query("SELECT * FROM footballs_overs WHERE football_id = $fid AND kind = $kind ORDER BY created_at ASC")
         .bind(("fid", rid))
@@ -149,7 +132,7 @@ async fn fetch_overs(fid: &str, kind: u8) -> Result<Vec<FootballOver>, String> {
 // ── Enrich ─────────────────────────────────────────────────────────────────────
 
 async fn enrich(doc: FootballDoc) -> Result<Football, String> {
-    let fid = id_only(&doc.id);
+    let fid = common::id_only(&doc.id);
     let lines = fetch_lines(&fid, 0).await?;
     let calcs = fetch_overs(&fid, 0).await?;
     let officials = fetch_overs(&fid, 1).await?;
@@ -164,8 +147,8 @@ async fn enrich(doc: FootballDoc) -> Result<Football, String> {
         away_team: doc.away_team,
         kick_off_at_mdhm: mdhm(&doc.kick_off_at),
         kick_off_at_mdhm8: mdhm8(&doc.kick_off_at),
-        created_at: ymdhmsz8(&doc.created_at),
-        updated_at: ymdhmsz8(&doc.updated_at),
+        created_at: common::ymdhmsz8(&doc.created_at),
+        updated_at: common::ymdhmsz8(&doc.updated_at),
         hits: doc.hits.max(0) as u64,
         stars: doc.stars.max(0) as u64,
         status: doc.status,
@@ -178,26 +161,6 @@ async fn enrich(doc: FootballDoc) -> Result<Football, String> {
 }
 
 // ── Pagination ─────────────────────────────────────────────────────────────────
-
-fn page_size() -> i64 {
-    std::env::var("PAGE_SIZE")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(12)
-}
-
-fn make_page_info(from: i64, ps: i64, total: u64) -> PageInfo {
-    let tp = ((total as f64 / ps as f64).ceil() as u32).max(1);
-    PageInfo {
-        current_page: from as u32,
-        total_pages: tp,
-        total_count: total,
-        first_cursor: String::new(),
-        last_cursor: String::new(),
-        has_previous: from > 1,
-        has_next: (from as u32) < tp,
-    }
-}
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
@@ -241,7 +204,11 @@ pub async fn get_footballs_in_position(
 }
 
 pub async fn get_football_by_id(id: &str) -> Result<Option<Football>, String> {
-    let bare = if id.contains(':') { id.split(':').nth(1).unwrap_or(id) } else { id };
+    let bare = if id.contains(':') {
+        id.split(':').nth(1).unwrap_or(id)
+    } else {
+        id
+    };
     let doc: Option<FootballDoc> = get_db()
         .select(("footballs", bare))
         .await
@@ -258,7 +225,7 @@ pub async fn get_random_football_id() -> Result<Option<String>, String> {
         .await
         .map_err(|e| e.to_string())?;
     let docs: Vec<IdOnly> = res.take(0).map_err(|e| e.to_string())?;
-    Ok(docs.into_iter().next().map(|d| id_only(&d.id)))
+    Ok(docs.into_iter().next().map(|d| common::id_only(&d.id)))
 }
 
 pub async fn get_footballs(
@@ -266,7 +233,7 @@ pub async fn get_footballs(
     status_min: i8,
     status_max: i8,
 ) -> Result<FootballsResult, String> {
-    let ps = page_size();
+    let ps = constant::config().page_size;
     // Count
     let mut cres = get_db()
         .query("SELECT count() FROM footballs WHERE status >= $min AND status <= $max GROUP ALL")
@@ -292,7 +259,7 @@ pub async fn get_footballs(
         items.push(enrich(d).await?);
     }
     Ok(FootballsResult {
-        page_info: make_page_info(from, ps, total),
+        page_info: common::make_page_info(from, ps, total),
         items,
     })
 }
@@ -301,8 +268,8 @@ pub async fn get_footballs_by_category(
     category_id: &str,
     from: i64,
 ) -> Result<FootballsResult, String> {
-    let cid = record_id("categories", category_id);
-    let ps = page_size();
+    let cid = common::record_id("categories", category_id);
+    let ps = constant::config().page_size;
 
     let mut cres = get_db()
         .query("SELECT count() FROM footballs WHERE category_id = $cid AND status >= 1 GROUP ALL")
@@ -326,14 +293,14 @@ pub async fn get_footballs_by_category(
         items.push(enrich(d).await?);
     }
     Ok(FootballsResult {
-        page_info: make_page_info(from, ps, total),
+        page_info: common::make_page_info(from, ps, total),
         items,
     })
 }
 
 pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<FootballsResult, String> {
-    let tid = record_id("topics", topic_id);
-    let ps = page_size();
+    let tid = common::record_id("topics", topic_id);
+    let ps = constant::config().page_size;
 
     // Fetch distinct football_ids linked to this topic
     let mut rel_res = get_db()
@@ -357,7 +324,7 @@ pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<Footbal
 
     if page_fids.is_empty() {
         return Ok(FootballsResult {
-            page_info: make_page_info(from, ps, total),
+            page_info: common::make_page_info(from, ps, total),
             items: vec![],
         });
     }
@@ -376,13 +343,13 @@ pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<Footbal
         items.push(enrich(d).await?);
     }
     Ok(FootballsResult {
-        page_info: make_page_info(from, ps, total),
+        page_info: common::make_page_info(from, ps, total),
         items,
     })
 }
 
 pub async fn get_footballs_admin(from: i64) -> Result<FootballsResult, String> {
-    let ps = page_size();
+    let ps = constant::config().page_size;
 
     let mut cres = get_db()
         .query("SELECT count() FROM footballs GROUP ALL")
@@ -404,13 +371,13 @@ pub async fn get_footballs_admin(from: i64) -> Result<FootballsResult, String> {
         items.push(enrich(d).await?);
     }
     Ok(FootballsResult {
-        page_info: make_page_info(from, ps, total),
+        page_info: common::make_page_info(from, ps, total),
         items,
     })
 }
 
 pub async fn update_football_status(id: &str, status: i8) -> Result<(), String> {
-    let rid = record_id("footballs", id);
+    let rid = common::record_id("footballs", id);
     get_db()
         .query("UPDATE $rid SET status = $status, updated_at = time::now()")
         .bind(("rid", rid))
@@ -421,7 +388,7 @@ pub async fn update_football_status(id: &str, status: i8) -> Result<(), String> 
 }
 
 pub async fn increment_hits(id: &str) -> Result<(), String> {
-    let rid = record_id("footballs", id);
+    let rid = common::record_id("footballs", id);
     get_db()
         .query("UPDATE $rid SET hits += 1")
         .bind(("rid", rid))

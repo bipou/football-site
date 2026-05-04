@@ -8,7 +8,6 @@ async fn main() {
     use leptos_axum::{LeptosRoutes, generate_route_list};
     use tower_http::services::ServeDir;
 
-    dotenvy::dotenv().ok();
     db::init().await;
 
     let conf = get_configuration(None).unwrap();
