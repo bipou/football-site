@@ -13,8 +13,6 @@ pub async fn init() {
     let db_user = constant::config().db_user.clone();
     let db_pass = constant::config().db_pass.clone();
 
-    leptos::logging::log!("SurrealDB {db_url} ns={db_ns} db={db_name}");
-
     let db = Surreal::new::<Ws>(&db_url)
         .await
         .unwrap_or_else(|e| panic!("connect {db_url}: {e}"));
@@ -34,7 +32,8 @@ pub async fn init() {
         .unwrap_or_else(|e| panic!("db: {e}"));
 
     DB.set(db).expect("DB already set");
-    leptos::logging::log!("SurrealDB ready");
+
+    leptos::logging::log!("SurrealDB ready: {db_url} ns={db_ns} db={db_name}");
 }
 
 pub fn get_db() -> &'static Surreal<Client> {
