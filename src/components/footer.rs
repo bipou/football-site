@@ -13,11 +13,16 @@ pub fn Footer() -> impl IntoView {
                 </p>
                 <p>
                     {move || t!(i18n, based_on)}
-                    " · "
+                    " - "
                     {move || t!(i18n, site_name)}
-                    " © 2024 · "
+                    " ©2024-2026 "
                     {move || t!(i18n, copyright)}
                 </p>
+                <small class="text-xs text-gray-500">
+                    琼ICP备2024032236号-13
+                    " · "
+                    琼ICP备2024032236号-13
+                </small>
             </div>
         </footer>
     }
