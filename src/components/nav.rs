@@ -60,11 +60,11 @@ pub fn Nav() -> impl IntoView {
                 <div class="flex items-center justify-between h-12">
 
                     // ── Logo ─────────────────────────────────────────────────
-                    <span>
+                    <span class="inline-flex items-center">
                         <A href="/" attr:class=format!("font-bold text-blue-600 dark:text-blue-400 text-2xl site-title {} {}", NO_UNDERLINE, HOVER_NO_UNDERLINE)>
                             {move || t!(i18n, site_name)}
                         </A>
-                        <span class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 align-text-top h-6 px-2 ml-2">
+                        <span class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 h-6 px-2 ml-2">
                             {move || t!(i18n, site_slogan)}
                         </span>
                     </span>
@@ -88,7 +88,7 @@ pub fn Nav() -> impl IntoView {
                                 ev.prevent_default();
                                 random_action.dispatch(());
                             }
-                            class=format!("text-red-500 dark:text-red-400 font-medium hover:text-red-600 dark:hover:text-red-300 transition-colors {}", NO_UNDERLINE)
+                            class=format!("text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors {}", NO_UNDERLINE)
                         >
                             {move || t!(i18n, lucky_slip)}
                         </a>
