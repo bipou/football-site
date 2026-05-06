@@ -47,10 +47,10 @@ pub async fn get_footballs_page(
     use crate::server::football_db;
     let res = match filter.as_str() {
         "recommended" => football_db::get_footballs(from, 3, 4).await,
-        "sticky"      => football_db::get_footballs(from, 2, 4).await,
-        "category"    => football_db::get_footballs_by_category(&filter_id, from).await,
-        "topic"       => football_db::get_footballs_by_topic(&filter_id, from).await,
-        _             => football_db::get_footballs(from, 1, 4).await,
+        "sticky" => football_db::get_footballs(from, 2, 4).await,
+        "category" => football_db::get_footballs_by_category(&filter_id, from).await,
+        "topic" => football_db::get_footballs_by_topic(&filter_id, from).await,
+        _ => football_db::get_footballs(from, 1, 4).await,
     };
     res.map_err(|e| ServerFnError::new(e.to_string()))
 }
@@ -59,12 +59,18 @@ pub async fn get_footballs_page(
 
 #[component]
 pub fn FootballsPage() -> impl IntoView {
-    let i18n   = use_i18n();
-    let query  = use_query_map();
+    let i18n = use_i18n();
+    let query = use_query_map();
 
     // Reactive query params
-    let from    = move || query.read().get("from").and_then(|v| v.parse().ok()).unwrap_or(1i64);
-    let filter  = move || query.read().get("filter").unwrap_or_default();
+    let from = move || {
+        query
+            .read()
+            .get("from")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(1i64)
+    };
+    let filter = move || query.read().get("filter").unwrap_or_default();
     let filter_id = move || query.read().get("fid").unwrap_or_default();
 
     let cats_res = Resource::new(|| (), |_| get_sidebar_categories());
@@ -77,8 +83,8 @@ pub fn FootballsPage() -> impl IntoView {
     // Determine filter label
     let filter_label = move || match filter().as_str() {
         "recommended" => t_string!(i18n, footballs_filter_recommended),
-        "sticky"      => t_string!(i18n, footballs_filter_sticky),
-        _             => t_string!(i18n, footballs_list),
+        "sticky" => t_string!(i18n, footballs_filter_sticky),
+        _ => t_string!(i18n, footballs_list),
     };
 
     view! {
@@ -132,9 +138,9 @@ pub fn FootballsPage() -> impl IntoView {
 
                 // ── Main content ─────────────────────────────────────────────
                 <div class="flex-1 min-w-0">
-                    <Suspense fallback=|| view! {
+                    <Suspense fallback=move || view! {
                         <div class="flex justify-center py-16">
-                            <div class="text-gray-400">"Loading..."</div>
+                            <div class="text-gray-400">{move || t!(i18n, loading)}</div>
                         </div>
                     }>
                         {move || footballs_res.get().map(|result| match result {

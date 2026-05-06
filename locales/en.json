@@ -1,13 +1,16 @@
 {
   "site_name": "BiPou",
-  "site_slogan": "Practice of Calculation Technical",
-  "site_intro": "BiPou is a calculation practice platform based on AI algorithms, multi-model analysis, and Rust technology. The calculation is just for fun, not completely accurate — do not use it for lottery or gambling!",
+  "site_slogan": "Football Prediction Experiment",
+  "site_intro": "BiPou, Football Prediction Experiment: exhaustive analysis is NO BETTER than a wild guess?",
+  "site_warn": "For entertainment purposes only. May not be accurate. Do not use for betting or gambling!",
 
+  "lang_current": "English",
+  "lang_zh": "中文",
+  "lang_en": "English",
+
+  "lucky_slip": "Lucky Winning Slip",
   "nav_footballs": "Footballs Calculation",
-  "nav_footballs_tip": "Calculation for football games, just for fun",
   "nav_users": "Gamers",
-  "switch_theme": "Switch Theme",
-  "random_football": "Random Football",
   "more": "More ...",
 
   "footballs_today": "Latest Calculation Today",
@@ -30,31 +33,20 @@
   "register": "Register",
   "sign_in": "Sign in",
   "sign_out": "Sign out",
-  "user_profile": "Your profile",
-  "user_general": "General information",
-  "user_contact": "Contact information",
-  "footballs_management": "Footballs Management",
   "all": "All",
-  "secret": "Secret",
-  "not_setting": "Not setting",
   "based_on": "Based on iRust.net",
   "copyright": "All Rights Reserved",
-  "admin": "Admin",
 
   "footballs_list": "Football Calculation List",
   "footballs_filter_sticky": "Latest Sticky Footballs",
   "footballs_filter_recommended": "Latest Recommended Footballs",
   "footballs_filter_category": "Category:",
-  "footballs_filter_topic": "Topic:",
   "football_created": "Created",
   "football_updated": "Updated",
   "football_keys_tags": "Tags:",
   "football_hits": "Hits:",
-  "football_overview": "Football Overview",
-  "football_risk_tip": "Calculation is for fun only — not accurate, not for gambling!",
   "football_season": "Season:",
   "football_kick_off": "Kick-off:",
-  "football_category": "Category:",
 
   "user_sign_in": "User Sign In",
   "sign_in_account": "Account",
@@ -67,7 +59,6 @@
   "sign_in_not_activation": "Account not yet activated, please check your email",
   "sign_in_banned": "This account has been banned",
   "sign_in_security_problem": "Security issue with this account, please contact support",
-  "sign_in_resend_email": "Resend activation email",
 
   "user_register": "User Register",
   "register_username": "Username",
@@ -80,7 +71,6 @@
   "register_nickname_tip": "Display name",
   "register_phone": "Phone",
   "register_phone_tip": "Frequently-used phone number",
-  "register_public": "Public",
   "register_im": "IM",
   "register_im_tip": "WhatsApp, WeChat, QQ, etc.",
   "register_website": "Website",
@@ -94,10 +84,7 @@
   "register_exist": "Username or Email already exists",
   "register_success": "Registration successful! Please check your email to activate your account.",
 
-  "authors_editors": "Authors/Editors",
-  "my_profile": "My Profile",
   "registration_time": "Registered:",
-  "no_statistics": "No statistics",
   "features_keys_tags": "Feature tags:",
   "related_keys_tags": "Related tags:",
   "user_intro_label": "Introduction",
@@ -128,7 +115,6 @@
 
   "loading": "Loading...",
   "error_not_found": "Page not found",
-  "error_server": "Server error",
   "go_home": "Go Home",
   "no_data": "No data available"
 }

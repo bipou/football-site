@@ -1,4 +1,4 @@
-use crate::i18n::t;
+use crate::i18n::{t, t_string};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -16,7 +16,9 @@ const HOVER_UNDERLINE: &str = "hover:underline";
 #[server]
 pub async fn get_admin_footballs(from: i64) -> Result<FootballsResult, ServerFnError> {
     use crate::server::football_db;
-    football_db::get_footballs_admin(from).await.map_err(|e| ServerFnError::new(e.to_string()))
+    football_db::get_footballs_admin(from)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))
 }
 
 #[server]
@@ -71,12 +73,21 @@ pub fn AdminPage() -> impl IntoView {
 
 #[component]
 pub fn AdminFootballsPage() -> impl IntoView {
-    let i18n  = use_i18n();
-    let auth  = use_auth();
+    let i18n = use_i18n();
+    let auth = use_auth();
     let query = use_query_map();
-    let from  = move || query.read().get("from").and_then(|v| v.parse().ok()).unwrap_or(1i64);
+    let from = move || {
+        query
+            .read()
+            .get("from")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(1i64)
+    };
 
-    let data = Resource::new(move || from(), |f| async move { get_admin_footballs(f).await });
+    let data = Resource::new(
+        move || from(),
+        |f| async move { get_admin_footballs(f).await },
+    );
     let update_action = ServerAction::<AdminUpdateStatus>::new();
 
     view! {
@@ -108,7 +119,7 @@ pub fn AdminFootballsPage() -> impl IntoView {
                         }.into_any(),
                     })}
 
-                    <Suspense fallback=|| view! { <p class="text-gray-400 text-center py-8">"Loading..."</p> }>
+                    <Suspense fallback=move || view! { <p class="text-gray-400 text-center py-8">{move || t!(i18n, loading)}</p> }>
                         {move || data.get().map(|result| match result {
                             Err(e) => view! { <p class="text-red-500">{e.to_string()}</p> }.into_any(),
                             Ok(d) => {
@@ -134,13 +145,20 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                                     // Status action buttons
                                                     <div class="flex gap-1 flex-wrap">
                                                         {[
-                                                            (1i8, "Pub", "bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300"),
-                                                            (2, "Hot", "bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-300"),
-                                                            (3, "Rec", "bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:text-orange-300"),
-                                                            (4, "Both", "bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300"),
-                                                            (0, "Hide", "bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"),
-                                                        ].into_iter().map(|(s, label, cls)| {
+                                                            (1i8, "status_publish", "bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300"),
+                                                            (2, "status_sticky", "bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-300"),
+                                                            (3, "status_recommend", "bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:text-orange-300"),
+                                                            (4, "status_both", "bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300"),
+                                                            (0, "status_hide", "bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"),
+                                                        ].into_iter().map(|(s, key, cls)| {
                                                             let fid3 = fid2.clone();
+                                                            let label: String = match key {
+                                                                "status_publish" => t_string!(i18n, status_publish).to_owned(),
+                                                                "status_sticky" => t_string!(i18n, status_sticky).to_owned(),
+                                                                "status_recommend" => t_string!(i18n, status_recommend).to_owned(),
+                                                                "status_hide" => t_string!(i18n, status_hide).to_owned(),
+                                                                _ => "Both".to_string(),
+                                                            };
                                                             view! {
                                                                 <ActionForm action=update_action>
                                                                     <input type="hidden" name="football_id" value=fid3.clone()/>
@@ -172,10 +190,10 @@ pub fn AdminFootballsPage() -> impl IntoView {
 
 #[component]
 pub fn AdminFootballDetailPage() -> impl IntoView {
-    let i18n   = use_i18n();
-    let auth   = use_auth();
+    let i18n = use_i18n();
+    let auth = use_auth();
     let params = use_params_map();
-    let id     = move || params.read().get("id").unwrap_or_default();
+    let id = move || params.read().get("id").unwrap_or_default();
 
     view! {
         <Title text="BiPou"/>

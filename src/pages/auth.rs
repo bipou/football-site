@@ -1,4 +1,4 @@
-use crate::i18n::t;
+use crate::i18n::{t, t_string};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
@@ -13,7 +13,7 @@ const HOVER_UNDERLINE: &str = "hover:underline";
 #[server]
 pub async fn sign_in(signature: String, password: String) -> Result<(), ServerFnError> {
     use crate::server::{auth as auth_mod, user_db};
-    use axum::http::{header, HeaderValue};
+    use axum::http::{HeaderValue, header};
 
     let auth_user = user_db::sign_in(&signature, &password)
         .await
@@ -35,7 +35,7 @@ pub async fn sign_in(signature: String, password: String) -> Result<(), ServerFn
 #[server]
 pub async fn sign_out() -> Result<(), ServerFnError> {
     use crate::server::auth as auth_mod;
-    use axum::http::{header, HeaderValue};
+    use axum::http::{HeaderValue, header};
 
     let resp = expect_context::<leptos_axum::ResponseOptions>();
     resp.insert_header(
@@ -157,11 +157,14 @@ pub fn SignInPage() -> impl IntoView {
 
                     // Error
                     {move || action.value().get().and_then(|r| r.err()).map(|e| {
-                        let msg = match e.to_string().as_str() {
-                            s if s.contains("sign_in_incorrect") => String::from("") /* was: t!(i18n, sign_in_incorrect) */,
-                            s if s.contains("sign_in_not_activation") => String::from("") /* was: t!(i18n, sign_in_not_activation) */,
-                            s if s.contains("sign_in_banned") => String::from("") /* was: t!(i18n, sign_in_banned) */,
-                            _ => e.to_string(),
+                        let msg = if e.to_string().contains("sign_in_incorrect") {
+                            t_string!(i18n, sign_in_incorrect)
+                        } else if e.to_string().contains("sign_in_not_activation") {
+                            t_string!(i18n, sign_in_not_activation)
+                        } else if e.to_string().contains("sign_in_banned") {
+                            t_string!(i18n, sign_in_banned)
+                        } else {
+                            t_string!(i18n, sign_in_security_problem)
                         };
                         view! { <p class="text-red-500 text-sm text-center">{msg}</p> }
                     })}
@@ -223,8 +226,6 @@ pub fn RegisterPage() -> impl IntoView {
         }
     });
 
-    let is_zh = move || i18n.get_locale() == crate::i18n::Locale::zh;
-
     view! {
         <Title text="BiPou"/>
         <Nav/>
@@ -248,7 +249,7 @@ pub fn RegisterPage() -> impl IntoView {
                 <Show when=move || !success.get() fallback=|| ()>
                     <div class="space-y-4">
                     <ActionForm action=action>
-                        <input type="hidden" name="lang" value=move || if is_zh() { "zh" } else { "en" }/>
+                        <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
                         <input type="hidden" name="phone_public" value="false"/>
                         <input type="hidden" name="im_public" value="false"/>
 
@@ -349,7 +350,6 @@ pub fn UserActivatePage() -> impl IntoView {
     );
 
     let resend_action = ServerAction::<ResendActivation>::new();
-    let is_zh = move || i18n.get_locale() == crate::i18n::Locale::zh;
 
     view! {
         <Title text="BiPou"/>
@@ -378,11 +378,11 @@ pub fn UserActivatePage() -> impl IntoView {
                 </Suspense>
 
                 <div class="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
-                    <p class="text-sm text-gray-500 mb-3">{move || t!(i18n, sign_in_resend_email)}</p>
+                    <p class="text-sm text-gray-500 mb-3">{move || t!(i18n, resend_activation)}</p>
                     <div class="space-y-3">
                     <ActionForm action=resend_action>
                         <input type="hidden" name="user_id" value=move || user_id()/>
-                        <input type="hidden" name="lang" value=move || if is_zh() { "zh" } else { "en" }/>
+                        <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
                         <button type="submit"
                                 disabled=move || resend_action.pending().get()
                                 class="btn-secondary w-full justify-center text-sm">

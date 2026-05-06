@@ -22,9 +22,9 @@ pub async fn get_football_and_increment(id: String) -> Result<Option<Football>, 
 
 #[component]
 pub fn FootballDetailPage() -> impl IntoView {
-    let i18n   = use_i18n();
+    let i18n = use_i18n();
     let params = use_params_map();
-    let id     = move || params.read().get("id").unwrap_or_default();
+    let id = move || params.read().get("id").unwrap_or_default();
 
     let data = Resource::new_blocking(
         move || id(),
@@ -34,7 +34,7 @@ pub fn FootballDetailPage() -> impl IntoView {
     view! {
         <Nav/>
         <main class="max-w-4xl mx-auto px-4 py-8">
-            <Suspense fallback=|| view! { <div class="text-center py-16 text-gray-400">"Loading..."</div> }>
+            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
                     Err(e) => view! { <p class="text-red-500 text-center py-8">{e.to_string()}</p> }.into_any(),
                     Ok(None) => view! {
@@ -208,7 +208,7 @@ pub fn FootballDetailPage() -> impl IntoView {
                             } else { view! { <span/> }.into_any() }}
 
                             <p class="text-xs text-red-400 text-center mt-4">
-                                {move || t!(i18n, football_risk_tip)}
+                                {move || t!(i18n, site_warn)}
                             </p>
                         }.into_any()
                     }

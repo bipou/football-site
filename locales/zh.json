@@ -1,13 +1,16 @@
 {
   "site_name": "毕剖",
-  "site_slogan": "测算技术实践",
-  "site_intro": "毕剖，仅仅为基于 AI 算法、多模型分析，以及 Rust 技术栈的测算技术实践平台。测算纯属娱乐，不尽然准确，勿用于博彩或赌博！",
+  "site_slogan": "足球预测实验",
+  "site_intro": "毕剖，足球预测实验：毕力殚剖，不如一蒙？",
+  "site_warn": "纯属娱乐，不尽然准确，勿用于博彩或赌博！",
 
+  "lang_current": "中文",
+  "lang_zh": "中文",
+  "lang_en": "English",
+
+  "lucky_slip": "幸运红单",
   "nav_footballs": "足球测算",
-  "nav_footballs_tip": "足球比赛测算，纯属娱乐",
   "nav_users": "游戏人",
-  "switch_theme": "切换色彩模式",
-  "random_football": "试试手气",
   "more": "更多 ...",
 
   "footballs_today": "今日最新测算",
@@ -30,31 +33,20 @@
   "register": "注册",
   "sign_in": "签入",
   "sign_out": "签出",
-  "user_profile": "个人资料",
-  "user_general": "基本信息",
-  "user_contact": "联系方式",
-  "footballs_management": "足球管理",
   "all": "全部",
-  "secret": "保密",
-  "not_setting": "未设置",
   "based_on": "基于 iRust.net",
   "copyright": "版权所有",
-  "admin": "管理员",
 
   "footballs_list": "足赛测算列表",
   "footballs_filter_sticky": "最新热门足球测算",
   "footballs_filter_recommended": "最新推荐足球测算",
   "footballs_filter_category": "赛事类别：",
-  "footballs_filter_topic": "标签：",
   "football_created": "创建于",
   "football_updated": "更新于",
   "football_keys_tags": "关键词/标签：",
   "football_hits": "浏览：",
-  "football_overview": "足球赛事概述",
-  "football_risk_tip": "测算纯属娱乐，不尽然准确，勿用于博彩或赌博！",
   "football_season": "赛季：",
   "football_kick_off": "开球时间：",
-  "football_category": "赛事类别：",
 
   "user_sign_in": "用户签入",
   "sign_in_account": "账户",
@@ -67,7 +59,6 @@
   "sign_in_not_activation": "账户尚未激活，请查阅激活邮件",
   "sign_in_banned": "此账户已被封禁",
   "sign_in_security_problem": "此账户安全有异，请联系服务专员",
-  "sign_in_resend_email": "重新发送激活邮件",
 
   "user_register": "用户注册",
   "register_username": "用户名",
@@ -80,7 +71,6 @@
   "register_nickname_tip": "昵称或花名",
   "register_phone": "手机",
   "register_phone_tip": "常用手机号码",
-  "register_public": "公开",
   "register_im": "交流工具",
   "register_im_tip": "微信、QQ、WhatsApp 等",
   "register_website": "网站",
@@ -94,10 +84,7 @@
   "register_exist": "用户名或邮箱已存在",
   "register_success": "注册成功！请查阅邮件激活账户。",
 
-  "authors_editors": "作者/编者",
-  "my_profile": "我的资料",
   "registration_time": "注册时间：",
-  "no_statistics": "暂无统计",
   "features_keys_tags": "特点关键词/标签：",
   "related_keys_tags": "涉猎关键词/标签：",
   "user_intro_label": "用户简介",
@@ -128,7 +115,6 @@
 
   "loading": "加载中...",
   "error_not_found": "页面未找到",
-  "error_server": "服务器错误",
   "go_home": "返回首页",
   "no_data": "暂无数据"
 }

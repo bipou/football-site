@@ -22,22 +22,32 @@ const RISK_CLASS: &str = "text-xs text-gray-400 text-center mt-6";
 #[server]
 pub async fn get_users_page(from: i64) -> Result<UsersResult, ServerFnError> {
     use crate::server::user_db;
-    user_db::get_users(from).await.map_err(|e| ServerFnError::new(e.to_string()))
+    user_db::get_users(from)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))
 }
 
 #[server]
 pub async fn get_user_profile(username: String) -> Result<Option<User>, ServerFnError> {
     use crate::server::user_db;
-    user_db::get_user_by_username(&username).await.map_err(|e| ServerFnError::new(e.to_string()))
+    user_db::get_user_by_username(&username)
+        .await
+        .map_err(|e| ServerFnError::new(e.to_string()))
 }
 
 // ── Users list page ───────────────────────────────────────────────────────────
 
 #[component]
 pub fn UsersPage() -> impl IntoView {
-    let i18n  = use_i18n();
+    let i18n = use_i18n();
     let query = use_query_map();
-    let from  = move || query.read().get("from").and_then(|v| v.parse().ok()).unwrap_or(1i64);
+    let from = move || {
+        query
+            .read()
+            .get("from")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(1i64)
+    };
 
     let data = Resource::new(move || from(), |f| async move { get_users_page(f).await });
 
@@ -48,7 +58,7 @@ pub fn UsersPage() -> impl IntoView {
             <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
                 {move || t!(i18n, users_list)}
             </h1>
-            <Suspense fallback=|| view! { <div class="text-center py-16 text-gray-400">Loading...</div> }>
+            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
                     Err(e) => view! { <p class="text-red-500 text-center">{e.to_string()}</p> }.into_any(),
                     Ok(d) => {
@@ -97,10 +107,10 @@ pub fn UsersPage() -> impl IntoView {
 
 #[component]
 pub fn UserProfilePage() -> impl IntoView {
-    let i18n   = use_i18n();
+    let i18n = use_i18n();
     let params = use_params_map();
     let username = move || params.read().get("username").unwrap_or_default();
-    let auth   = use_auth();
+    let auth = use_auth();
 
     let data = Resource::new_blocking(
         move || username(),
@@ -110,7 +120,7 @@ pub fn UserProfilePage() -> impl IntoView {
     view! {
         <Nav/>
         <main class="max-w-4xl mx-auto px-4 py-8">
-            <Suspense fallback=|| view! { <div class="text-center py-16 text-gray-400">Loading...</div> }>
+            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
                     Err(e) => view! { <p class="text-red-500 text-center">{e.to_string()}</p> }.into_any(),
                     Ok(None) => view! {

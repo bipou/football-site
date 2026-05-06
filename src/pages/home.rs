@@ -38,17 +38,17 @@ pub fn HomePage() -> impl IntoView {
         <main class="max-w-6xl mx-auto px-4 py-8">
             // ── Site intro ───────────────────────────────────────────────────
             <div class="mb-10 text-center">
-                <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400 site-title mb-2">
-                    {move || t!(i18n, site_name)}
-                </h1>
                 <p class="text-gray-500 dark:text-gray-400 text-sm max-w-2xl mx-auto">
                     {move || t!(i18n, site_intro)}
                 </p>
+                <p class="text-xs text-red-400 dark:text-red-500 mt-3 max-w-2xl mx-auto">
+                    {move || t!(i18n, site_warn)}
+                </p>
             </div>
 
-            <Suspense fallback=|| view! {
+            <Suspense fallback=move || view! {
                 <div class="flex justify-center py-16">
-                    <div class="text-gray-400 text-sm">"Loading matches..."</div>
+                    <div class="text-gray-400 text-sm">{move || t!(i18n, loading)}</div>
                 </div>
             }>
                 {move || data.get().map(|result| match result {

@@ -1,3 +1,4 @@
+use crate::i18n::t;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::{
@@ -5,7 +6,7 @@ use leptos_router::{
     path,
 };
 
-use crate::i18n::I18nContextProvider;
+use crate::i18n::{I18nContextProvider, use_i18n};
 use crate::models::AuthUser;
 use crate::pages::{
     admin::{AdminFootballDetailPage, AdminFootballsPage, AdminPage},
@@ -28,6 +29,9 @@ pub fn shell(options: leptos::config::LeptosOptions) -> impl IntoView {
                 <AutoReload options=options.clone()/>
                 <HydrationScripts options/>
                 <MetaTags/>
+                <script>
+                    {r#"(function(){var t=localStorage.getItem("theme");if(t==="light"){document.documentElement.classList.add("light")}else if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.documentElement.classList.add("dark")}})()"#}
+                </script>
             </head>
             <body class="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
                 <App/>
@@ -67,7 +71,7 @@ pub type AuthResource = Resource<Result<Option<AuthUser>, ServerFnError>>;
 /// Call inside any reactive scope to get the current user (if signed in).
 pub fn use_auth() -> Option<AuthUser> {
     use_context::<AuthResource>()
-        .and_then(|r| r.get())
+        .and_then(|r| r.get_untracked())
         .and_then(|r| r.ok())
         .flatten()
 }
@@ -85,7 +89,7 @@ pub fn App() -> impl IntoView {
         <Title text="BiPou – Football Calculation"/>
 
         <I18nContextProvider>
-            <Suspense fallback=|| view! { <p class="p-4 text-center">"Loading..."</p> }>
+            <Suspense fallback=|| view! { <LoadingFallback/> }>
                 <Router>
                     <Routes fallback=|| view! { <NotFound/> }>
                         <Route path=path!("/")                    view=HomePage/>
@@ -109,13 +113,22 @@ pub fn App() -> impl IntoView {
 
 #[component]
 fn NotFound() -> impl IntoView {
+    let i18n = use_i18n();
     view! {
         <div class="min-h-screen flex items-center justify-center">
             <div class="text-center space-y-4 p-8">
                 <h1 class="text-7xl font-bold text-blue-600">"404"</h1>
-                <p class="text-xl text-gray-500 dark:text-gray-400">"Page not found"</p>
-                <a href="/" class="btn-primary inline-block mt-4">"Go Home"</a>
+                <p class="text-xl text-gray-500 dark:text-gray-400">{move || t!(i18n, error_not_found)}</p>
+                <a href="/" class="btn-primary inline-block mt-4">{move || t!(i18n, go_home)}</a>
             </div>
         </div>
+    }
+}
+
+#[component]
+fn LoadingFallback() -> impl IntoView {
+    let i18n = use_i18n();
+    view! {
+        <p class="p-4 text-center">{move || t!(i18n, loading)}</p>
     }
 }
