@@ -240,7 +240,7 @@ pub fn RegisterPage() -> impl IntoView {
                         <p class="text-green-700 dark:text-green-300 text-sm font-medium">
                             {move || t!(i18n, register_success)}
                         </p>
-                        <a href="/sign-in " class="btn-primary mt-4 inline-block">
+                        <a href="/sign-in" class="btn-primary mt-4 inline-block">
                             {move || t!(i18n, sign_in)}
                         </a>
                     </div>
@@ -327,7 +327,7 @@ pub fn RegisterPage() -> impl IntoView {
 
                     <p class="mt-4 text-sm text-center text-gray-500">
                         {move || t!(i18n, register_have_account)} " "
-                        <a href="/sign-in " class=format!("text-blue-500 {}", HOVER_UNDERLINE)>{move || t!(i18n, register_go_sign_in)}</a>
+                        <a href="/sign-in" class=format!("text-blue-500 {}", HOVER_UNDERLINE)>{move || t!(i18n, register_go_sign_in)}</a>
                     </p>
                 </Show>
             </div>
@@ -369,7 +369,7 @@ pub fn UserActivatePage() -> impl IntoView {
                                 <p class="text-green-600 dark:text-green-400 font-semibold text-lg">
                                     {nickname} " — " {move || t!(i18n, user_activated)}
                                 </p>
-                                <a href="/sign-in " class="btn-primary inline-block">
+                                <a href="/sign-in" class="btn-primary inline-block">
                                     {move || t!(i18n, sign_in)}
                                 </a>
                             </div>

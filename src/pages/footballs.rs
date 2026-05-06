@@ -8,7 +8,7 @@ use crate::components::{FootballCard, Footer, Nav, Pagination};
 use crate::i18n::use_i18n;
 use crate::models::{Category, FootballsResult};
 
-const NO_UNDERLINE: &str = "no-underline";
+use crate::utils::constant::NO_UNDERLINE;
 
 // ── Server functions ──────────────────────────────────────────────────────────
 

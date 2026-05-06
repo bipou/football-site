@@ -7,7 +7,7 @@ use crate::components::{FootballCard, Footer, Nav};
 use crate::i18n::use_i18n;
 use crate::models::Football;
 
-const HOVER_UNDERLINE: &str = "hover:underline";
+use crate::utils::constant::HOVER_UNDERLINE;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomeData {

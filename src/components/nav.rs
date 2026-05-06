@@ -28,8 +28,7 @@ extern "C" {
     fn toggle_theme();
 }
 
-const NO_UNDERLINE: &str = "no-underline";
-const HOVER_NO_UNDERLINE: &str = "hover:no-underline";
+use crate::utils::constant::{HOVER_NO_UNDERLINE, NO_UNDERLINE};
 
 #[component]
 pub fn Nav() -> impl IntoView {
@@ -63,16 +62,16 @@ pub fn Nav() -> impl IntoView {
 
                     // ── Logo ─────────────────────────────────────────────────
                     <span>
-                        <A href="/" attr:class=format!("font-bold text-blue-600 dark:text-blue-400 text-xl site-title {} {}", NO_UNDERLINE, HOVER_NO_UNDERLINE)>
+                        <A href="/" attr:class=format!("font-bold text-blue-600 dark:text-blue-400 text-2xl site-title {} {}", NO_UNDERLINE, HOVER_NO_UNDERLINE)>
                             {move || t!(i18n, site_name)}
                         </A>
-                        <span class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 align-text-top h-5 px-2 ml-3">
+                        <span class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 align-text-top h-6 px-2 ml-2">
                             {move || t!(i18n, site_slogan)}
                         </span>
                     </span>
 
                     // ── Desktop nav links ─────────────────────────────────────
-                    <div class="hidden sm:flex items-center gap-5 text-sm">
+                    <div class="hidden sm:flex items-center gap-5 text-base">
                         <A href="/footballs" attr:class=format!("text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
                             {move || t!(i18n, nav_footballs)}
                         </A>
@@ -96,9 +95,9 @@ pub fn Nav() -> impl IntoView {
                         </a>
 
                         // Language dropdown
-                        <div style="position:relative; display:inline-block">
+                        <div class="relative inline-block">
                             <button
-                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-500 rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 on:click=move |ev| {
                                     ev.stop_propagation();
                                     set_lang_open.update(|v| *v = !*v);
@@ -109,9 +108,8 @@ pub fn Nav() -> impl IntoView {
                                 <span class="ml-1 opacity-50">"▾"</span>
                             </button>
                             <div
-                                class=move || format!("bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {}",
+                                class=move || format!("bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50",
                                     if lang_open.get() { "" } else { "hidden" })
-                                style="position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:0.25rem; white-space:nowrap; z-index:50"
                             >
                                 <button
                                     on:click=move |_| { i18n.set_locale(Locale::zh); set_lang_open.set(false); }
@@ -138,7 +136,7 @@ pub fn Nav() -> impl IntoView {
                         <button
                             title="Toggle theme"
                             on:click=on_theme_click
-                            style="width:1.75rem;height:1.75rem;display:flex;align-items:center;justify-content:center;border-radius:50%;border:0;background:transparent;cursor:pointer;font-size:1rem;line-height:1"
+                            class="w-7 h-7 flex items-center justify-center rounded-full border-0 bg-transparent cursor-pointer text-base leading-1"
                         >
                             "🌓"
                         </button>
@@ -148,19 +146,19 @@ pub fn Nav() -> impl IntoView {
                             let a = auth.clone();
                             if let Some(user) = a {
                                 view! {
-                                    <span class="text-gray-700 dark:text-gray-200 font-medium hidden sm:inline">
+                                    <span class="text-gray-700 dark:text-gray-200 font-medium hidden sm:inline text-base">
                                         {user.username.clone()}
                                     </span>
-                                    <A href="/sign-out" attr:class=format!("text-xs text-gray-500 hover:text-red-500 {}", NO_UNDERLINE)>
+                                    <A href="/sign-out" attr:class=format!("text-sm text-gray-500 hover:text-red-500 {}", NO_UNDERLINE)>
                                         {move || t!(i18n, sign_out)}
                                     </A>
                                 }.into_any()
                             } else {
                                 view! {
-                                    <A href="/sign-in " attr:class=format!("text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
+                                    <A href="/sign-in" attr:class=format!("text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
                                         {move || t!(i18n, sign_in)}
                                     </A>
-                                    <A href="/register" attr:class=format!("text-xs text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
+                                    <A href="/register" attr:class=format!("text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
                                         {move || t!(i18n, register)}
                                     </A>
                                 }.into_any()

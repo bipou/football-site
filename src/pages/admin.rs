@@ -8,8 +8,7 @@ use crate::components::{Footer, Nav, Pagination};
 use crate::i18n::use_i18n;
 use crate::models::FootballsResult;
 
-const NO_UNDERLINE: &str = "no-underline";
-const HOVER_UNDERLINE: &str = "hover:underline";
+use crate::utils::constant::{HOVER_UNDERLINE, NO_UNDERLINE};
 
 // ── Server functions ──────────────────────────────────────────────────────────
 
@@ -44,7 +43,7 @@ pub fn AdminPage() -> impl IntoView {
                 view! {
                     <div class="text-center py-16">
                         <p class="text-gray-500 mb-4">"Please sign in to access the admin area."</p>
-                        <a href="/sign-in " class="btn-primary">"Sign In"</a>
+                        <a href="/sign-in" class="btn-primary">"Sign In"</a>
                     </div>
                 }.into_any()
             } else {
@@ -97,7 +96,7 @@ pub fn AdminFootballsPage() -> impl IntoView {
             {if auth.is_none() {
                 view! {
                     <div class="text-center py-16">
-                        <a href="/sign-in " class="btn-primary">"Sign In Required"</a>
+                        <a href="/sign-in" class="btn-primary">"Sign In Required"</a>
                     </div>
                 }.into_any()
             } else {
@@ -202,7 +201,7 @@ pub fn AdminFootballDetailPage() -> impl IntoView {
             {if auth.is_none() {
                 view! {
                     <div class="text-center py-16">
-                        <a href="/sign-in " class="btn-primary">"Sign In Required"</a>
+                        <a href="/sign-in" class="btn-primary">"Sign In Required"</a>
                                             </div>
                                         }.into_any()
                                     } else {

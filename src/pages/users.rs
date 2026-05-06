@@ -180,7 +180,7 @@ pub fn UserProfilePage() -> impl IntoView {
                                         <p class=ITALIC_CLASS>
                                             {move || t!(i18n, user_view_contact)}
                                             {" "}
-                                            <a href="/sign-in " class="text-blue-500">{move || t!(i18n, sign_in)}</a>
+                                            <a href="/sign-in" class="text-blue-500">{move || t!(i18n, sign_in)}</a>
                                         </p>
                                     }.into_any()
                                 }}

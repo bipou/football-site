@@ -1,7 +1,13 @@
+// ── CSS class constants (shared) ────────────────────────────────────────────
+pub const NO_UNDERLINE: &str = "no-underline";
+pub const HOVER_NO_UNDERLINE: &str = "hover:no-underline";
+pub const HOVER_UNDERLINE: &str = "hover:underline";
+
+// ── Config (SSR only) ──────────────────────────────────────────────────────
+#[cfg(feature = "ssr")]
 use std::sync::LazyLock;
 
-// ── Config ────────────────────────────────────────────────────────────────────
-
+#[cfg(feature = "ssr")]
 pub struct Config {
     pub domain: String,
     pub site_key: String,
@@ -18,6 +24,7 @@ pub struct Config {
     pub email_password: String,
 }
 
+#[cfg(feature = "ssr")]
 static CFG: LazyLock<Config> = LazyLock::new(|| {
     dotenvy::dotenv().ok();
     Config {
@@ -37,16 +44,19 @@ static CFG: LazyLock<Config> = LazyLock::new(|| {
     }
 });
 
+#[cfg(feature = "ssr")]
 pub fn config() -> &'static Config {
     &CFG
 }
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ── helpers (SSR only) ──────────────────────────────────────────────────────
 
+#[cfg(feature = "ssr")]
 fn env(key: &str) -> String {
     std::env::var(key).unwrap_or_else(|_| panic!("{key} must be set"))
 }
 
+#[cfg(feature = "ssr")]
 fn parse<T: std::str::FromStr>(key: &str) -> T
 where
     <T as std::str::FromStr>::Err: std::fmt::Display,
@@ -57,6 +67,7 @@ where
         .unwrap_or_else(|e| panic!("{key} must be a valid integer: {e}"))
 }
 
+#[cfg(feature = "ssr")]
 fn now() -> usize {
     use std::time::{SystemTime, UNIX_EPOCH};
     SystemTime::now()
