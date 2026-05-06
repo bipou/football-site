@@ -10,7 +10,7 @@ crate-type = ["cdylib", "rlib"]
 leptos       = { version = "0.8" }
 leptos_meta  = { version = "0.8" }
 leptos_router = { version = "0.8" }
-leptos_i18n  = { version = "0.6", default-features = false, features = ["cookie"] }
+leptos_i18n  = { version = "0.6" }
 serde        = { version = "1.0", features = ["derive"] }
 chrono       = { version = "0.4", optional = true }
 # hydrate-only
@@ -19,9 +19,9 @@ wasm-bindgen             = { version = "0.2",  optional = true }
 # ssr-only
 axum          = { version = "0.8",  optional = true }
 leptos_axum   = { version = "0.8",  optional = true }
-tokio         = { version = "1.52",  features = ["rt-multi-thread", "macros", "net", "fs", "signal", "sync", "time"], optional = true }
+tokio         = { version = "1.52",  features = ["full"], optional = true }
 tower-http    = { version = "0.6",  features = ["fs"],   optional = true }
-surrealdb     = { version = "3.0",  default-features = false, features = ["protocol-ws"], optional = true }
+surrealdb     = { version = "3.0",   optional = true }
 jsonwebtoken  = { version = "10.3", optional = true }
 ring          = { version = "0.17", optional = true }
 base64        = { version = "0.22", optional = true }

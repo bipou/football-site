@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use crate::utils::common;
+use serde::Deserialize;
 use surrealdb::types::{RecordId, SurrealValue};
 
 use crate::models::Category;
@@ -17,7 +17,6 @@ struct NameDoc {
     zh: String,
     en: String,
 }
-
 
 fn into_category(d: CategoryDoc) -> Category {
     Category {

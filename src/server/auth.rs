@@ -1,5 +1,5 @@
-use base64::{engine::general_purpose::STANDARD, Engine};
-use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use base64::{Engine, engine::general_purpose::STANDARD};
+use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use ring::pbkdf2;
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroU32;
@@ -23,14 +23,29 @@ fn make_salt(username: &str) -> Vec<u8> {
 pub fn hash_credential(username: &str, password: &str) -> String {
     let salt = make_salt(username);
     let mut cred = vec![0u8; CRED_LEN];
-    pbkdf2::derive(PBKDF2_ALG, NonZeroU32::new(ITERATIONS).unwrap(), &salt, password.as_bytes(), &mut cred);
+    pbkdf2::derive(
+        PBKDF2_ALG,
+        NonZeroU32::new(ITERATIONS).unwrap(),
+        &salt,
+        password.as_bytes(),
+        &mut cred,
+    );
     STANDARD.encode(&cred)
 }
 
 pub fn verify_credential(username: &str, password: &str, stored: &str) -> bool {
-    let Ok(stored_bytes) = STANDARD.decode(stored) else { return false };
+    let Ok(stored_bytes) = STANDARD.decode(stored) else {
+        return false;
+    };
     let salt = make_salt(username);
-    pbkdf2::verify(PBKDF2_ALG, NonZeroU32::new(ITERATIONS).unwrap(), &salt, password.as_bytes(), &stored_bytes).is_ok()
+    pbkdf2::verify(
+        PBKDF2_ALG,
+        NonZeroU32::new(ITERATIONS).unwrap(),
+        &salt,
+        password.as_bytes(),
+        &stored_bytes,
+    )
+    .is_ok()
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -47,16 +62,24 @@ pub fn encode_jwt(email: &str, username: &str) -> Result<String, String> {
         exp: constant::config().claim_exp,
     };
     let header = Header::new(Algorithm::HS512);
-    encode(&header, &claims, &EncodingKey::from_secret(constant::config().site_key.as_bytes()))
-        .map_err(|e| e.to_string())
+    encode(
+        &header,
+        &claims,
+        &EncodingKey::from_secret(constant::config().site_key.as_bytes()),
+    )
+    .map_err(|e| e.to_string())
 }
 
 pub fn decode_jwt(token: &str) -> Result<Claims, String> {
     let mut val = Validation::new(Algorithm::HS512);
     val.validate_exp = true;
-    decode::<Claims>(token, &DecodingKey::from_secret(constant::config().site_key.as_bytes()), &val)
-        .map(|td| td.claims)
-        .map_err(|e| e.to_string())
+    decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(constant::config().site_key.as_bytes()),
+        &val,
+    )
+    .map(|td| td.claims)
+    .map_err(|e| e.to_string())
 }
 
 pub fn get_cookie_value(header: &str, name: &str) -> Option<String> {

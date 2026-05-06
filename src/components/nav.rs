@@ -11,7 +11,6 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen(inline_js = r#"
     export function toggle_theme() {
-        console.log("toggle_theme called");
         const h = document.documentElement;
         if (h.classList.contains("dark")) {
             h.classList.remove("dark");
