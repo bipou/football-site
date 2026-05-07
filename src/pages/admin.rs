@@ -1,4 +1,5 @@
 use crate::i18n::{t, t_string};
+use crate::page_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -36,7 +37,7 @@ pub fn AdminPage() -> impl IntoView {
     let auth = use_auth();
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, admin_dashboard)/>
         <Nav/>
         <main class="max-w-4xl mx-auto px-4 py-8">
             {if auth.is_none() {
@@ -90,7 +91,7 @@ pub fn AdminFootballsPage() -> impl IntoView {
     let update_action = ServerAction::<AdminUpdateStatus>::new();
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, admin_footballs)/>
         <Nav/>
         <main class="max-w-5xl mx-auto px-4 py-8">
             {if auth.is_none() {

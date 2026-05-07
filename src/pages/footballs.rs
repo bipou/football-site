@@ -8,6 +8,7 @@ use crate::components::{FootballCard, Footer, Nav, Pagination};
 use crate::i18n::use_i18n;
 use crate::models::{Category, FootballsResult};
 
+use crate::page_title;
 use crate::utils::constant::NO_UNDERLINE;
 
 // ── Server functions ──────────────────────────────────────────────────────────
@@ -80,7 +81,6 @@ pub fn FootballsPage() -> impl IntoView {
         |(f, fi, fid)| async move { get_footballs_page(f, fi, fid).await },
     );
 
-    // Determine filter label
     let filter_label = move || match filter().as_str() {
         "recommended" => t_string!(i18n, footballs_filter_recommended),
         "sticky" => t_string!(i18n, footballs_filter_sticky),
@@ -88,7 +88,7 @@ pub fn FootballsPage() -> impl IntoView {
     };
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, footballs_list)/>
         <Nav/>
         <main class="max-w-6xl mx-auto px-4 py-8">
             <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">

@@ -1,5 +1,30 @@
 use crate::models::PageInfo;
 
+// ── Page title macros ────────────────────────────────────────────────────
+
+#[macro_export]
+macro_rules! page_title {
+    ($i18n:expr, $key:ident) => {
+        format!(
+            "{} – {} | {}",
+            $crate::i18n::t_string!($i18n, $key),
+            $crate::i18n::t_string!($i18n, site_name),
+            $crate::i18n::t_string!($i18n, site_slogan)
+        )
+    };
+}
+
+#[macro_export]
+macro_rules! site_title {
+    ($i18n:expr) => {
+        format!(
+            "{} | {}",
+            $crate::i18n::t_string!($i18n, site_name),
+            $crate::i18n::t_string!($i18n, site_slogan)
+        )
+    };
+}
+
 // ── Pagination (wasm + server) ────────────────────────────────────────────────
 
 pub fn make_page_info(from: i64, ps: i64, total: u64) -> PageInfo {

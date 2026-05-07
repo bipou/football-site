@@ -1,4 +1,5 @@
 use crate::i18n::t;
+use crate::site_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use serde::{Deserialize, Serialize};
@@ -33,7 +34,7 @@ pub fn HomePage() -> impl IntoView {
     let data = Resource::new_blocking(|| (), |_| get_home_data());
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || site_title!(i18n)/>
         <Nav/>
         <main class="max-w-6xl mx-auto px-4 py-8">
             // ── Site intro ───────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 const BADGE_BLUE_NO_UL: &str = "badge-blue no-underline";
 use crate::i18n::t;
+use crate::site_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
@@ -44,7 +45,7 @@ pub fn FootballDetailPage() -> impl IntoView {
                         </div>
                     }.into_any(),
                     Ok(Some(f)) => {
-                        let title_text = format!("{} vs {} – BiPou", f.home_team, f.away_team);
+                        let title_text = format!("{} vs {} – {}", f.home_team, f.away_team, site_title!(i18n));
                         let cat_name  = f.category.as_ref().map(|c| c.name_en.clone()).unwrap_or_default();
                         view! {
                             <Title text=title_text/>

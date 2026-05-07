@@ -1,4 +1,5 @@
 use crate::i18n::{t, t_string};
+use crate::page_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
@@ -132,7 +133,7 @@ pub fn SignInPage() -> impl IntoView {
     });
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, user_sign_in)/>
         <Nav/>
         <main class="min-h-[80vh] flex items-center justify-center px-4">
             <div class="card p-8 w-full max-w-sm">
@@ -227,7 +228,7 @@ pub fn RegisterPage() -> impl IntoView {
     });
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, user_register)/>
         <Nav/>
         <main class="max-w-2xl mx-auto px-4 py-8">
             <div class="card p-8">
@@ -352,7 +353,7 @@ pub fn UserActivatePage() -> impl IntoView {
     let resend_action = ServerAction::<ResendActivation>::new();
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, user_activate)/>
         <Nav/>
         <main class="min-h-[80vh] flex items-center justify-center px-4">
             <div class="card p-8 w-full max-w-md text-center">

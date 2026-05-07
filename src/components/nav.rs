@@ -64,9 +64,9 @@ pub fn Nav() -> impl IntoView {
                         <A href="/" attr:class=format!("font-bold text-blue-600 dark:text-blue-400 text-2xl site-title {} {}", NO_UNDERLINE, HOVER_NO_UNDERLINE)>
                             {move || t!(i18n, site_name)}
                         </A>
-                        <span class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 h-6 px-2 ml-2">
+                        <a href="/doc" class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 h-6 px-2 ml-2 no-underline" target="_blank">
                             {move || t!(i18n, site_slogan)}
-                        </span>
+                        </a>
                     </span>
 
                     // ── Desktop nav links ─────────────────────────────────────

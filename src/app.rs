@@ -1,4 +1,5 @@
 use crate::i18n::t;
+use crate::site_title;
 use leptos::prelude::*;
 use leptos_meta::{MetaTags, Stylesheet, Title, provide_meta_context};
 use leptos_router::{
@@ -86,7 +87,6 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Stylesheet id="leptos" href="/pkg/football_site.css"/>
-        <Title text="t!(i18n, site_name) | t!(i18n, site_slogan)"/>
 
         <I18nContextProvider>
             <Suspense fallback=|| view! { <LoadingFallback/> }>
@@ -115,6 +115,7 @@ pub fn App() -> impl IntoView {
 fn NotFound() -> impl IntoView {
     let i18n = use_i18n();
     view! {
+        <Title text=move || format!("404 – {}", site_title!(i18n))/>
         <div class="min-h-screen flex items-center justify-center">
             <div class="text-center space-y-4 p-8">
                 <h1 class="text-7xl font-bold text-blue-600">"404"</h1>

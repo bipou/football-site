@@ -1,4 +1,6 @@
 use crate::i18n::t;
+use crate::page_title;
+use crate::site_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -52,7 +54,7 @@ pub fn UsersPage() -> impl IntoView {
     let data = Resource::new(move || from(), |f| async move { get_users_page(f).await });
 
     view! {
-        <Title text="BiPou"/>
+        <Title text=move || page_title!(i18n, users_list)/>
         <Nav/>
         <main class="max-w-4xl mx-auto px-4 py-8">
             <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
@@ -131,7 +133,7 @@ pub fn UserProfilePage() -> impl IntoView {
                     }.into_any(),
                     Ok(Some(user)) => {
                         let is_signed_in = auth.is_some();
-                        let title = format!("{} – BiPou", user.nickname);
+                        let title = format!("{} – {}", user.nickname, site_title!(i18n));
                         let initial = user.nickname.chars().next().unwrap_or('?');
                         view! {
                             <Title text=title/>
