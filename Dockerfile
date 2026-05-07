@@ -8,7 +8,9 @@ RUN rustup target add wasm32-unknown-unknown \
 
 WORKDIR /build
 COPY . .
-RUN cargo leptos build --release
+RUN cargo leptos build --release \
+    && rm -rf /usr/local/cargo/registry \
+    && rm -rf target/wasm32-unknown-unknown target/release/build target/release/deps target/release/incremental
 
 FROM debian:trixie-slim
 
