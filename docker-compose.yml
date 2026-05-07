@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "7600:7600"
+    env_file:
+      - .env
+    networks:
+      - surrealdb_net
+
+networks:
+  surrealdb_net:
+    external: true
