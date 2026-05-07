@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-slim AS builder
+FROM rustlang/rust:nightly AS builder
 
 RUN rustup target add wasm32-unknown-unknown \
     && apt-get update \
@@ -8,9 +8,7 @@ RUN rustup target add wasm32-unknown-unknown \
 
 WORKDIR /build
 COPY . .
-RUN cargo leptos build --release \
-    && rm -rf /usr/local/cargo/registry \
-    && rm -rf target/wasm32-unknown-unknown target/release/build target/release/deps target/release/incremental
+RUN cargo leptos build --release
 
 FROM debian:trixie-slim
 
