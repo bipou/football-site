@@ -1,14 +1,10 @@
-FROM rust:slim AS builder
+FROM rustlang/rust:nightly-slim AS builder
 
-RUN rustup toolchain install nightly --profile minimal \
-    && rustup default nightly \
-    && rustup toolchain remove stable \
-    && rustup target add wasm32-unknown-unknown \
+RUN rustup target add wasm32-unknown-unknown \
     && apt-get update \
     && apt-get install -y --no-install-recommends pkg-config libssl-dev cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN cargo install cargo-leptos --locked
+    && rm -rf /var/lib/apt/lists/* \
+    && cargo install cargo-leptos
 
 WORKDIR /build
 COPY . .
@@ -16,7 +12,7 @@ RUN cargo leptos build --release \
     && rm -rf /usr/local/cargo/registry \
     && rm -rf target/wasm32-unknown-unknown target/release/build target/release/deps target/release/incremental
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
