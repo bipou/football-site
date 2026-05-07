@@ -1,6 +1,12 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      network: host
+      args:
+        - HTTP_PROXY=${HTTP_PROXY}
+        - HTTPS_PROXY=${HTTPS_PROXY}
+        - NO_PROXY=${NO_PROXY}
     ports:
       - "7600:7600"
     env_file:
