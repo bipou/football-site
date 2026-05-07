@@ -67,7 +67,7 @@ pub fn FootballCard(football: Football) -> impl IntoView {
             // ── Odds ─────────────────────────────────────────────────────────
             {if f.il_odds.is_empty() {
                 view! {
-                    <p class=format!("text-xs text-gray-400 {} mb-2", ITALIC)>{move || t!(i18n, not_calc)}</p>
+                    <p class=format!("text-xs text-gray-400 {} mb-2", ITALIC)>{move || t!(i18n, not_pred)}</p>
                 }.into_any()
             } else {
                 let init_odds = f.il_odds.first().cloned();
@@ -96,17 +96,17 @@ pub fn FootballCard(football: Football) -> impl IntoView {
                 }.into_any()
             }}
 
-            // ── Calculations ──────────────────────────────────────────────────
-            {if f.il_calc_over.is_empty() {
+            // ── Predictions ──────────────────────────────────────────────────
+            {if f.il_pred_over.is_empty() {
                 view! { <span/> }.into_any()
             } else {
-                let init_calc = f.il_calc_over.first().cloned();
-                let last_calc = f.il_calc_over.last().cloned();
+                let init_pred = f.il_pred_over.first().cloned();
+                let last_pred = f.il_pred_over.last().cloned();
                 view! {
                     <div class="text-xs space-y-1 mb-2 border-t border-gray-100 dark:border-gray-700 pt-2">
-                        {init_calc.map(|c| view! {
+                        {init_pred.map(|c| view! {
                             <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_init_calc)}</span>
+                                <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_init_pred)}</span>
                                 <span class="text-gray-600 dark:text-gray-300">
                                     {move || t!(i18n, football_s)} ": " {c.s.clone()}
                                     " | " {move || t!(i18n, football_wdl)} ": " {c.wdl.clone()}
@@ -115,10 +115,10 @@ pub fn FootballCard(football: Football) -> impl IntoView {
                                 </span>
                             </div>
                         })}
-                        {last_calc.and_then(|c| {
-                            if f.il_calc_over.len() > 1 { Some(view! {
+                        {last_pred.and_then(|c| {
+                            if f.il_pred_over.len() > 1 { Some(view! {
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_last_calc)}</span>
+                                    <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_last_pred)}</span>
                                     <span class="text-gray-600 dark:text-gray-300">
                                         {move || t!(i18n, football_s)} ": " {c.s.clone()}
                                         " | " {move || t!(i18n, football_wdl)} ": " {c.wdl.clone()}

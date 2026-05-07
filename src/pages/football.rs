@@ -79,7 +79,7 @@ pub fn FootballDetailPage() -> impl IntoView {
                             <div class="card p-6 mb-6">
                                 <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">"Odds"</h2>
                                 {if f.il_odds.is_empty() {
-                                    view! { <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_calc)}</p> }.into_any()
+                                    view! { <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_pred)}</p> }.into_any()
                                 } else {
                                     let init = f.il_odds.first().cloned();
                                     let last = f.il_odds.last().cloned();
@@ -121,14 +121,14 @@ pub fn FootballDetailPage() -> impl IntoView {
                                 }}
                             </div>
 
-                            // ── Calculations table ──────────────────────────────
+                            // ── Predictions table ──────────────────────────────
                             <div class="card p-6 mb-6">
-                                <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">"Calculations"</h2>
-                                {if f.il_calc_over.is_empty() {
-                                    view! { <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_calc)}</p> }.into_any()
+                                <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">"Predictions"</h2>
+                                {if f.il_pred_over.is_empty() {
+                                    view! { <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_pred)}</p> }.into_any()
                                 } else {
-                                    let init = f.il_calc_over.first().cloned();
-                                    let last = f.il_calc_over.last().cloned();
+                                    let init = f.il_pred_over.first().cloned();
+                                    let last = f.il_pred_over.last().cloned();
                                     view! {
                                         <div class="overflow-x-auto">
                                             <table class="w-full text-sm text-left">
@@ -153,7 +153,7 @@ pub fn FootballDetailPage() -> impl IntoView {
                                                             <td class="px-4 py-2 text-xs text-gray-400">{c.created_at.clone()}</td>
                                                         </tr>
                                                     })}
-                                                    {last.and_then(|c| if f.il_calc_over.len() > 1 { Some(view! {
+                                                    {last.and_then(|c| if f.il_pred_over.len() > 1 { Some(view! {
                                                         <tr class="border-b border-gray-100 dark:border-gray-700">
                                                             <td class="px-4 py-2 text-gray-500">"Latest"</td>
                                                             <td class="px-4 py-2 font-medium">{c.s.clone()}</td>

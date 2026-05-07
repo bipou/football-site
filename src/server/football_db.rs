@@ -134,7 +134,7 @@ async fn fetch_overs(fid: &str, kind: u8) -> Result<Vec<FootballOver>, String> {
 async fn enrich(doc: FootballDoc) -> Result<Football, String> {
     let fid = common::id_only(&doc.id);
     let lines = fetch_lines(&fid, 0).await?;
-    let calcs = fetch_overs(&fid, 0).await?;
+    let preds = fetch_overs(&fid, 0).await?;
     let officials = fetch_overs(&fid, 1).await?;
     let topics = topic_db::get_topics_by_football_id(&fid).await?;
     let category = category_db::get_category_by_id(&doc.category_id).await?;
@@ -153,7 +153,7 @@ async fn enrich(doc: FootballDoc) -> Result<Football, String> {
         stars: doc.stars.max(0) as u64,
         status: doc.status,
         il_odds: il_pair(lines),
-        il_calc_over: il_pair(calcs),
+        il_pred_over: il_pair(preds),
         football_over: officials.into_iter().last(),
         category,
         topics,

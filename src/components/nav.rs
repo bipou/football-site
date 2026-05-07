@@ -72,10 +72,10 @@ pub fn Nav() -> impl IntoView {
                     // ── Desktop nav links ─────────────────────────────────────
                     <div class="hidden sm:flex items-center gap-5 text-base">
                         <A href="/footballs" attr:class=format!("text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
-                            {move || t!(i18n, nav_footballs)}
+                            {move || t!(i18n, nav_football)}
                         </A>
                         <A href="/users" attr:class=format!("text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
-                            {move || t!(i18n, nav_users)}
+                            {move || t!(i18n, nav_user)}
                         </A>
                     </div>
 
@@ -90,7 +90,7 @@ pub fn Nav() -> impl IntoView {
                             }
                             class=format!("text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors {}", NO_UNDERLINE)
                         >
-                            {move || t!(i18n, lucky_slip)}
+                            {move || t!(i18n, slip)}
                         </a>
 
                         // Language dropdown

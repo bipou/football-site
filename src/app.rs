@@ -86,7 +86,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Stylesheet id="leptos" href="/pkg/football_site.css"/>
-        <Title text="BiPou – Football Calculation"/>
+        <Title text="t!(i18n, site_name) | t!(i18n, site_slogan)"/>
 
         <I18nContextProvider>
             <Suspense fallback=|| view! { <LoadingFallback/> }>
