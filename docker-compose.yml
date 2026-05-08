@@ -1,5 +1,12 @@
 services:
   app:
+    # build:
+    #   context: .
+    #   network: host
+    #   args:
+    #     - HTTP_PROXY=${HTTP_PROXY}
+    #     - HTTPS_PROXY=${HTTPS_PROXY}
+    #     - NO_PROXY=${NO_PROXY}
     image: ghcr.io/bipou/football-site:latest
     ports:
       - "7600:7600"

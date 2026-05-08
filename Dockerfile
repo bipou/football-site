@@ -1,15 +1,15 @@
 FROM rustlang/rust:nightly-slim AS builder
 
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ARG NO_PROXY
+# ARG HTTP_PROXY
+# ARG HTTPS_PROXY
+# ARG NO_PROXY
 
-ENV http_proxy=$HTTP_PROXY \
-    https_proxy=$HTTPS_PROXY \
-    no_proxy=$NO_PROXY \
-    HTTP_PROXY=$HTTP_PROXY \
-    HTTPS_PROXY=$HTTPS_PROXY \
-    NO_PROXY=$NO_PROXY
+# ENV http_proxy=$HTTP_PROXY \
+#     https_proxy=$HTTPS_PROXY \
+#     no_proxy=$NO_PROXY \
+#     HTTP_PROXY=$HTTP_PROXY \
+#     HTTPS_PROXY=$HTTPS_PROXY \
+#     NO_PROXY=$NO_PROXY
 
 RUN rustup target add wasm32-unknown-unknown \
     && apt-get update \
