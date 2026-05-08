@@ -38,7 +38,7 @@ fn MatchHeader(f: Football) -> impl IntoView {
                         <span>{move || t!(i18n, football_season)} " " {f.season}</span>
                         {if !cat.is_empty() {
                             view! { <span class=BADGE_GRAY>{cat}</span> }.into_any()
-                        } else { view! { <span/> }.into_any() }}
+                        } else { ().into_any() }}
                     </div>
                 </div>
                 <div class="text-right text-sm text-gray-500">
@@ -213,7 +213,7 @@ fn FootballDetail(f: Football) -> impl IntoView {
                     </div>
                 </div>
             }.into_any()
-        } else { view! { <span/> }.into_any() }}
+        } else { ().into_any() }}
         <p class="text-xs text-red-400 text-center mt-4">{warn}</p>
     }
 }

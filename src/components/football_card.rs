@@ -1,4 +1,4 @@
-use crate::i18n::{t, t_string, use_i18n};
+use crate::i18n::{t, use_i18n};
 use crate::models::Football;
 use crate::utils::constant::{BADGE_BLUE_NO_UL, BADGE_GRAY, BADGE_GREEN, BADGE_RED, ITALIC, ITALIC_XS};
 use leptos::prelude::*;

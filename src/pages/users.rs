@@ -11,14 +11,11 @@ use crate::components::{Footer, Nav, Pagination};
 use crate::i18n::use_i18n;
 use crate::models::{User, UsersResult};
 
-// ── CSS class constants ───────────────────────────────────────────────────────
 const CARD_BLOCK_NO_UL: &str = "card p-4 block no-underline hover:shadow-md transition-shadow";
 const ITALIC_CLASS: &str = "text-sm text-gray-400 italic";
 const WEBSITE_LINK_CLASS: &str = "text-blue-500 hover:underline ml-1 break-all";
 const PROSE_CLASS: &str = "prose prose-sm dark:prose-invert max-w-none";
 const RISK_CLASS: &str = "text-xs text-gray-400 text-center mt-6";
-
-// ── Server functions ──────────────────────────────────────────────────────────
 
 #[server]
 pub async fn get_users_page(from: i64) -> Result<UsersResult, ServerFnError> {
@@ -35,8 +32,6 @@ pub async fn get_user_profile(username: String) -> Result<Option<User>, ServerFn
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))
 }
-
-// ── Users list page ───────────────────────────────────────────────────────────
 
 #[component]
 pub fn UsersPage() -> impl IntoView {
@@ -76,11 +71,11 @@ pub fn UsersPage() -> impl IntoView {
                                                     {initial.to_string()}
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <p class="font-semibold text-gray-800 dark:text-gray-100 truncate">{u.nickname.clone()}</p>
-                                                    <p class="text-xs text-gray-400">@ {u.username.clone()}</p>
+                                                    <p class="font-semibold text-gray-800 dark:text-gray-100 truncate">{u.nickname}</p>
+                                                    <p class="text-xs text-gray-400">@ {u.username}</p>
                                                 </div>
                                             </div>
-                                            <p class="text-xs text-gray-400">{move || t!(i18n, registration_time)} {u.created_at.clone()}</p>
+                                            <p class="text-xs text-gray-400">{move || t!(i18n, registration_time)} {u.created_at}</p>
                                             {if !u.keywords.is_empty() {
                                                 view! {
                                                     <div class="flex flex-wrap gap-1 mt-2">
@@ -89,7 +84,7 @@ pub fn UsersPage() -> impl IntoView {
                                                         }).collect::<Vec<_>>()}
                                                     </div>
                                                 }.into_any()
-                                            } else { view! { <span/> }.into_any() }}
+                                            } else { ().into_any() }}
                                         </a>
                                     }
                                 }).collect::<Vec<_>>()}
@@ -103,8 +98,6 @@ pub fn UsersPage() -> impl IntoView {
         <Footer/>
     }
 }
-
-// ── User profile page ─────────────────────────────────────────────────────────
 
 #[component]
 pub fn UserProfilePage() -> impl IntoView {
@@ -137,43 +130,40 @@ pub fn UserProfilePage() -> impl IntoView {
                         view! {
                             <Title text=title/>
 
-                            // ── Profile header ───────────────────────────────
                             <div class="card p-6 mb-6">
                                 <div class="flex items-center gap-4 mb-4">
                                     <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 font-bold text-2xl shrink-0">
                                         {initial.to_string()}
                                     </div>
                                     <div>
-                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{user.nickname.clone()}</h1>
-                                        <p class="text-sm text-gray-500">@ {user.username.clone()}</p>
-                                        <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {user.created_at.clone()}</p>
+                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{user.nickname}</h1>
+                                        <p class="text-sm text-gray-500">@ {user.username}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {user.created_at}</p>
                                     </div>
                                 </div>
 
-                                // Website
                                 {if !user.website.is_empty() {
                                     view! {
                                         <p class="text-sm mb-2">
                                             <span class="text-gray-500">{move || t!(i18n, user_website)} </span>
-                                            <a href={user.website.clone()} target="_blank" class=WEBSITE_LINK_CLASS>
-                                                {user.website.clone()}
+                                            <a href=user.website.clone() target="_blank" class=WEBSITE_LINK_CLASS>
+                                                {user.website}
                                             </a>
                                         </p>
                                     }.into_any()
-                                } else { view! { <span/> }.into_any() }}
+                                } else { ().into_any() }}
 
-                                // Contact (requires sign-in)
                                 {if is_signed_in {
                                     view! {
                                         <div class="text-sm space-y-1">
                                             {if !user.phone_number.is_empty() && user.phone_public {
-                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{user.phone_number.clone()}</p> }
+                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{user.phone_number}</p> }
                                                     .into_any()
-                                            } else { view! { <span/> }.into_any() }}
+                                            } else { ().into_any() }}
                                             {if !user.im_account.is_empty() && user.im_public {
-                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{user.im_account.clone()}</p> }
+                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{user.im_account}</p> }
                                                     .into_any()
-                                            } else { view! { <span/> }.into_any() }}
+                                            } else { ().into_any() }}
                                         </div>
                                     }.into_any()
                                 } else {
@@ -187,19 +177,17 @@ pub fn UserProfilePage() -> impl IntoView {
                                 }}
                             </div>
 
-                            // ── Introduction ───────────────────────────────────
                             {if !user.introduction_html.is_empty() {
                                 view! {
                                     <div class="card p-6 mb-6">
                                         <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">
                                             {move || t!(i18n, user_intro_label)}
                                         </h2>
-                                        <article class=PROSE_CLASS inner_html=user.introduction_html.clone()/>
+                                        <article class=PROSE_CLASS inner_html=user.introduction_html/>
                                     </div>
                                 }.into_any()
-                            } else { view! { <span/> }.into_any() }}
+                            } else { ().into_any() }}
 
-                            // ── Keywords & Topics ─────────────────────────────
                             {if !user.keywords.is_empty() || !user.topics.is_empty() {
                                 view! {
                                     <div class="card p-6">
@@ -214,7 +202,7 @@ pub fn UserProfilePage() -> impl IntoView {
                                                     </div>
                                                 </div>
                                             }.into_any()
-                                        } else { view! { <span/> }.into_any() }}
+                                        } else { ().into_any() }}
                                         {if !user.topics.is_empty() {
                                             view! {
                                                 <div>
@@ -231,10 +219,10 @@ pub fn UserProfilePage() -> impl IntoView {
                                                     </div>
                                                 </div>
                                             }.into_any()
-                                        } else { view! { <span/> }.into_any() }}
+                                        } else { ().into_any() }}
                                     </div>
                                 }.into_any()
-                            } else { view! { <span/> }.into_any() }}
+                            } else { ().into_any() }}
 
                             <p class=RISK_CLASS>
                                 {move || t!(i18n, user_risk_tip)}
