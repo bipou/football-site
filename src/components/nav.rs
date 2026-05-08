@@ -44,6 +44,7 @@ fn Logo() -> impl IntoView {
             </a>
         </span>
     }
+    .into_any()
 }
 
 #[component]
@@ -59,6 +60,16 @@ fn NavLinks() -> impl IntoView {
             </A>
         </div>
     }
+    .into_any()
+}
+
+#[component]
+fn NavLeft() -> impl IntoView {
+    view! {
+        <Logo/>
+        <NavLinks/>
+    }
+    .into_any()
 }
 
 #[component]
@@ -84,6 +95,7 @@ fn LuckySlip() -> impl IntoView {
             {move || t!(i18n, slip)}
         </a>
     }
+    .into_any()
 }
 
 #[component]
@@ -128,6 +140,7 @@ fn LangDropdown() -> impl IntoView {
             </div>
         </div>
     }
+    .into_any()
 }
 
 #[component]
@@ -147,6 +160,7 @@ fn ThemeToggle() -> impl IntoView {
             "🌓"
         </button>
     }
+    .into_any()
 }
 
 #[component]
@@ -174,6 +188,36 @@ fn AuthSection() -> impl IntoView {
             }.into_any()
         }
     }
+    .into_any()
+}
+
+#[component]
+fn NavTools() -> impl IntoView {
+    view! {
+        <LuckySlip/>
+        <LangDropdown/>
+    }
+    .into_any()
+}
+
+#[component]
+fn NavActions() -> impl IntoView {
+    view! {
+        <ThemeToggle/>
+        <AuthSection/>
+    }
+    .into_any()
+}
+
+#[component]
+fn NavRight() -> impl IntoView {
+    view! {
+        <div class="flex items-center gap-3 text-sm">
+            <NavTools/>
+            <NavActions/>
+        </div>
+    }
+    .into_any()
 }
 
 // ── Main Nav ──────────────────────────────────────────────────────────────
@@ -184,16 +228,11 @@ pub fn Nav() -> impl IntoView {
         <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
             <div class="max-w-6xl mx-auto px-4">
                 <div class="flex items-center justify-between h-12">
-                    <Logo/>
-                    <NavLinks/>
-                    <div class="flex items-center gap-3 text-sm">
-                        <LuckySlip/>
-                        <LangDropdown/>
-                        <ThemeToggle/>
-                        <AuthSection/>
-                    </div>
+                    <NavLeft/>
+                    <NavRight/>
                 </div>
             </div>
         </nav>
     }
+    .into_any()
 }

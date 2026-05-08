@@ -143,11 +143,13 @@ pub fn UserProfilePage() -> impl IntoView {
                                 </div>
 
                                 {if !user.website.is_empty() {
+                                    let website_href = user.website.clone();
+                                    let website_text = user.website.clone();
                                     view! {
                                         <p class="text-sm mb-2">
                                             <span class="text-gray-500">{move || t!(i18n, user_website)} </span>
-                                            <a href=user.website.clone() target="_blank" class=WEBSITE_LINK_CLASS>
-                                                {user.website}
+                                            <a href=website_href target="_blank" class=WEBSITE_LINK_CLASS>
+                                                {website_text}
                                             </a>
                                         </p>
                                     }.into_any()
@@ -157,11 +159,13 @@ pub fn UserProfilePage() -> impl IntoView {
                                     view! {
                                         <div class="text-sm space-y-1">
                                             {if !user.phone_number.is_empty() && user.phone_public {
-                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{user.phone_number}</p> }
+                                                let phone = user.phone_number.clone();
+                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{phone}</p> }
                                                     .into_any()
                                             } else { ().into_any() }}
                                             {if !user.im_account.is_empty() && user.im_public {
-                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{user.im_account}</p> }
+                                                let im = user.im_account.clone();
+                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{im}</p> }
                                                     .into_any()
                                             } else { ().into_any() }}
                                         </div>

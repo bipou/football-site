@@ -167,23 +167,15 @@ fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
 }
 
 #[component]
-fn FootballDetail(f: Football) -> impl IntoView {
+fn OverDetail(
+    football_over: Option<crate::models::FootballOver>,
+    over_label: &'static str,
+    s_label: &'static str,
+    wdl_label: &'static str,
+    tg_label: &'static str,
+) -> impl IntoView {
     let i18n = use_i18n();
-    let header_f = f.clone();
-    let odds = f.il_odds.clone();
-    let calcs = f.il_pred_over.clone();
-    let over_label = t_string!(i18n, football_over);
-    let s_label = t_string!(i18n, football_s);
-    let wdl_label = t_string!(i18n, football_wdl);
-    let tg_label = t_string!(i18n, football_tg);
-    let tags_label = t_string!(i18n, football_keys_tags);
-    let warn = t_string!(i18n, site_warn);
-    let topics = f.topics;
-    let football_over = f.football_over;
     view! {
-        <MatchHeader f=header_f/>
-        <OddsTable odds=odds/>
-        <PredictionsTable calcs=calcs/>
         <div class="card p-6 mb-6">
             <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{over_label}</h2>
             {match football_over {
@@ -202,18 +194,53 @@ fn FootballDetail(f: Football) -> impl IntoView {
                 }.into_any(),
             }}
         </div>
-        {if !topics.is_empty() {
-            view! {
-                <div class="card p-4 mb-6">
-                    <p class="text-xs text-gray-500 mb-2">{tags_label}</p>
-                    <div class="flex flex-wrap gap-2">
-                        {topics.iter().map(|t| view! {
-                            <a href=format!("/footballs?filter=topic&fid={}", t.id) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
-                        }).collect::<Vec<_>>()}
-                    </div>
+    }
+}
+
+#[component]
+fn DetailTopicsSection(topics: Vec<crate::models::Topic>, tags_label: &'static str) -> impl IntoView {
+    if topics.is_empty() {
+        ().into_any()
+    } else {
+        view! {
+            <div class="card p-4 mb-6">
+                <p class="text-xs text-gray-500 mb-2">{tags_label}</p>
+                <div class="flex flex-wrap gap-2">
+                    {topics.iter().map(|t| view! {
+                        <a href=format!("/footballs?filter=topic&fid={}", t.id) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
+                    }).collect::<Vec<_>>()}
                 </div>
-            }.into_any()
-        } else { ().into_any() }}
+            </div>
+        }.into_any()
+    }
+}
+
+#[component]
+fn FootballDetail(f: Football) -> impl IntoView {
+    let i18n = use_i18n();
+    let header_f = f.clone();
+    let odds = f.il_odds.clone();
+    let calcs = f.il_pred_over.clone();
+    let over_label = t_string!(i18n, football_over);
+    let s_label = t_string!(i18n, football_s);
+    let wdl_label = t_string!(i18n, football_wdl);
+    let tg_label = t_string!(i18n, football_tg);
+    let tags_label = t_string!(i18n, football_keys_tags);
+    let warn = t_string!(i18n, site_warn);
+    let topics = f.topics;
+    let football_over = f.football_over;
+    view! {
+        <MatchHeader f=header_f/>
+        <OddsTable odds=odds/>
+        <PredictionsTable calcs=calcs/>
+        <OverDetail
+            football_over=football_over
+            over_label=over_label
+            s_label=s_label
+            wdl_label=wdl_label
+            tg_label=tg_label
+        />
+        <DetailTopicsSection topics=topics tags_label=tags_label/>
         <p class="text-xs text-red-400 text-center mt-4">{warn}</p>
     }
 }
@@ -247,4 +274,5 @@ pub fn FootballDetailPage() -> impl IntoView {
         </main>
         <Footer/>
     }
+    .into_any()
 }
