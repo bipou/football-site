@@ -57,7 +57,6 @@ fn TodaySection(footballs: Vec<Football>) -> impl IntoView {
             </div>
         </section>
     }
-    .into_any()
 }
 
 #[component]
@@ -84,7 +83,6 @@ fn YesterdaySection(footballs: Vec<Football>) -> impl IntoView {
             }}
         </section>
     }
-    .into_any()
 }
 
 #[component]

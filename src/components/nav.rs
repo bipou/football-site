@@ -44,7 +44,6 @@ fn Logo() -> impl IntoView {
             </a>
         </span>
     }
-    .into_any()
 }
 
 #[component]
@@ -60,7 +59,6 @@ fn NavLinks() -> impl IntoView {
             </A>
         </div>
     }
-    .into_any()
 }
 
 #[component]
@@ -69,7 +67,6 @@ fn NavLeft() -> impl IntoView {
         <Logo/>
         <NavLinks/>
     }
-    .into_any()
 }
 
 #[component]
@@ -95,7 +92,6 @@ fn LuckySlip() -> impl IntoView {
             {move || t!(i18n, slip)}
         </a>
     }
-    .into_any()
 }
 
 #[component]
@@ -140,7 +136,6 @@ fn LangDropdown() -> impl IntoView {
             </div>
         </div>
     }
-    .into_any()
 }
 
 #[component]
@@ -160,7 +155,6 @@ fn ThemeToggle() -> impl IntoView {
             "🌓"
         </button>
     }
-    .into_any()
 }
 
 #[component]
@@ -188,7 +182,6 @@ fn AuthSection() -> impl IntoView {
             }.into_any()
         }
     }
-    .into_any()
 }
 
 #[component]
@@ -197,7 +190,6 @@ fn NavTools() -> impl IntoView {
         <LuckySlip/>
         <LangDropdown/>
     }
-    .into_any()
 }
 
 #[component]
@@ -206,7 +198,6 @@ fn NavActions() -> impl IntoView {
         <ThemeToggle/>
         <AuthSection/>
     }
-    .into_any()
 }
 
 #[component]
@@ -217,7 +208,6 @@ fn NavRight() -> impl IntoView {
             <NavActions/>
         </div>
     }
-    .into_any()
 }
 
 // ── Main Nav ──────────────────────────────────────────────────────────────
