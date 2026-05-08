@@ -8,6 +8,8 @@ services:
     #     - HTTPS_PROXY=${HTTPS_PROXY}
     #     - NO_PROXY=${NO_PROXY}
     image: ghcr.io/bipou/football-site:latest
+    # container_name: football-site
+    restart: always
     ports:
       - "7600:7600"
     env_file:
