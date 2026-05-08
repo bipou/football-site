@@ -1,5 +1,3 @@
-#![recursion_limit = "4096"]
-
 pub mod app;
 pub mod components;
 pub mod models;
