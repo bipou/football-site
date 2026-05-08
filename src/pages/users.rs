@@ -1,6 +1,7 @@
 use crate::i18n::t;
 use crate::page_title;
 use crate::site_title;
+use crate::utils::constant::{BADGE_BLUE, BADGE_GRAY_NO_UL};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -11,8 +12,6 @@ use crate::i18n::use_i18n;
 use crate::models::{User, UsersResult};
 
 // ── CSS class constants ───────────────────────────────────────────────────────
-const BADGE_BLUE: &str = "badge-blue";
-const BADGE_GRAY_NO_UL: &str = "badge-gray no-underline";
 const CARD_BLOCK_NO_UL: &str = "card p-4 block no-underline hover:shadow-md transition-shadow";
 const ITALIC_CLASS: &str = "text-sm text-gray-400 italic";
 const WEBSITE_LINK_CLASS: &str = "text-blue-500 hover:underline ml-1 break-all";

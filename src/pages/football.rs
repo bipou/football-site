@@ -1,16 +1,12 @@
-const BADGE_BLUE_NO_UL: &str = "badge-blue no-underline";
-use crate::i18n::{t, t_string};
+use crate::i18n::{t, t_string, use_i18n};
 use crate::site_title;
+use crate::utils::constant::{BADGE_BLUE_NO_UL, BADGE_GRAY, ITALIC};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
 use crate::components::{Footer, Nav};
-use crate::i18n::use_i18n;
 use crate::models::Football;
-
-const BADGE_GRAY: &str = "badge-gray";
-const ITALIC: &str = "italic";
 
 #[server]
 pub async fn get_football_and_increment(id: String) -> Result<Option<Football>, ServerFnError> {
@@ -173,6 +169,9 @@ fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
 #[component]
 fn FootballDetail(f: Football) -> impl IntoView {
     let i18n = use_i18n();
+    let header_f = f.clone();
+    let odds = f.il_odds.clone();
+    let calcs = f.il_pred_over.clone();
     let over_label = t_string!(i18n, football_over);
     let s_label = t_string!(i18n, football_s);
     let wdl_label = t_string!(i18n, football_wdl);
@@ -182,9 +181,9 @@ fn FootballDetail(f: Football) -> impl IntoView {
     let topics = f.topics;
     let football_over = f.football_over;
     view! {
-        <MatchHeader f=f.clone()/>
-        <OddsTable odds=f.il_odds/>
-        <PredictionsTable calcs=f.il_pred_over/>
+        <MatchHeader f=header_f/>
+        <OddsTable odds=odds/>
+        <PredictionsTable calcs=calcs/>
         <div class="card p-6 mb-6">
             <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{over_label}</h2>
             {match football_over {
@@ -233,7 +232,7 @@ pub fn FootballDetailPage() -> impl IntoView {
     view! {
         <Nav/>
         <main class="max-w-4xl mx-auto px-4 py-8">
-            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{loading.clone()}</div> }>
+            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{loading}</div> }>
                 {move || data.get().map(|result| match result {
                     Err(e) => view! { <p class="text-red-500 text-center py-8">{e.to_string()}</p> }.into_any(),
                     Ok(None) => view! {

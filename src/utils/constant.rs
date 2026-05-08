@@ -2,6 +2,14 @@
 pub const NO_UNDERLINE: &str = "no-underline";
 pub const HOVER_NO_UNDERLINE: &str = "hover:no-underline";
 pub const HOVER_UNDERLINE: &str = "hover:underline";
+pub const BADGE_BLUE: &str = "badge-blue";
+pub const BADGE_BLUE_NO_UL: &str = "badge-blue no-underline";
+pub const BADGE_GRAY: &str = "badge-gray";
+pub const BADGE_GRAY_NO_UL: &str = "badge-gray no-underline";
+pub const BADGE_GREEN: &str = "badge-green";
+pub const BADGE_RED: &str = "badge-red";
+pub const ITALIC: &str = "italic";
+pub const ITALIC_XS: &str = "text-xs text-gray-400 italic";
 
 // ── Config (SSR only) ──────────────────────────────────────────────────────
 #[cfg(feature = "ssr")]
