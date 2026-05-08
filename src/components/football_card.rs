@@ -162,4 +162,5 @@ pub fn FootballCard(football: Football) -> impl IntoView {
             </div>
         </div>
     }
+    .into_any()
 }

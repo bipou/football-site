@@ -54,6 +54,7 @@ fn MatchHeader(f: Football) -> impl IntoView {
             </div>
         </div>
     }
+    .into_any()
 }
 
 #[component]
@@ -195,6 +196,7 @@ fn OverDetail(
             }}
         </div>
     }
+    .into_any()
 }
 
 #[component]
@@ -243,6 +245,7 @@ fn FootballDetail(f: Football) -> impl IntoView {
         <DetailTopicsSection topics=topics tags_label=tags_label/>
         <p class="text-xs text-red-400 text-center mt-4">{warn}</p>
     }
+    .into_any()
 }
 
 #[component]
