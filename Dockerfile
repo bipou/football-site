@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly AS builder
+FROM rustlang/rust:nightly-slim AS builder
 
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
