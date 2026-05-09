@@ -198,7 +198,10 @@ fn OverDetail(
 }
 
 #[component]
-fn DetailTopicsSection(topics: Vec<crate::models::Topic>, tags_label: &'static str) -> impl IntoView {
+fn DetailTopicsSection(
+    topics: Vec<crate::models::Topic>,
+    tags_label: &'static str,
+) -> impl IntoView {
     if topics.is_empty() {
         ().into_any()
     } else {

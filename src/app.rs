@@ -36,6 +36,8 @@ pub fn shell(options: leptos::config::LeptosOptions) -> impl IntoView {
             </head>
             <body class="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
                 <App/>
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2498669832870483" crossorigin="anonymous"></script>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({})</script>
             </body>
         </html>
     }
