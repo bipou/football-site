@@ -60,7 +60,7 @@ fn MatchHeader(f: Football) -> impl IntoView {
 fn OddsTable(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
     let i18n = use_i18n();
     if odds.is_empty() {
-        let msg = t_string!(i18n, not_pred);
+        let msg = t_string!(i18n, not_predicted);
         return view! { <div class="card p-6 mb-6"><p class=format!("text-gray-400 text-sm {}", ITALIC)>{msg}</p></div> }.into_any();
     }
     let init = odds.first().cloned();
@@ -114,7 +114,7 @@ fn OddsTable(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
 fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     if calcs.is_empty() {
-        let msg = t_string!(i18n, not_pred);
+        let msg = t_string!(i18n, not_predicted);
         return view! { <div class="card p-6 mb-6"><p class=format!("text-gray-400 text-sm {}", ITALIC)>{msg}</p></div> }.into_any();
     }
     let init = calcs.first().cloned();
@@ -180,7 +180,7 @@ fn OverDetail(
             <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">{over_label}</h2>
             {match football_over {
                 None => view! {
-                    <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_over)}</p>
+                    <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_full_time)}</p>
                 }.into_any(),
                 Some(ov) => view! {
                     <div class="flex gap-6 flex-wrap text-sm">

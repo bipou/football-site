@@ -1,7 +1,7 @@
 {
   "site_name": "毕剖",
-  "site_slogan": "足球预测实验",
-  "site_intro": "毕剖，足球预测实验：毕力殚剖，不如一蒙？",
+  "site_slogan": "足球预测实验室",
+  "site_intro": "毕剖，足球预测实验室：毕力殚剖，不如一蒙？",
   "site_warn": "纯属娱乐，不尽然准确，勿用于博彩或赌博！",
 
   "lang_current": "中文",
@@ -29,8 +29,9 @@
   "football_tg": "总进球",
   "football_gd": "净胜球",
   "football_over": "赛事结果：",
-  "not_pred": "尚未预测",
-  "not_over": "尚未结束",
+  "not_predicted": "尚未预测",
+  "not_full_time": "尚未全场",
+  "no_matches": "无球赛",
 
   "register": "注册",
   "sign_in": "签入",

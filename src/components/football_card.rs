@@ -39,7 +39,7 @@ fn CatBadge(name: String) -> impl IntoView {
 fn OddsSection(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
     let i18n = use_i18n();
     if odds.is_empty() {
-        return view! { <p class=format!("text-xs text-gray-400 {} mb-2", ITALIC)>{move || t!(i18n, not_pred)}</p> }.into_any();
+        return view! { <p class=format!("text-xs text-gray-400 {} mb-2", ITALIC)>{move || t!(i18n, not_predicted)}</p> }.into_any();
     }
     let init = odds.first().cloned();
     let last = odds.last().cloned();
@@ -105,7 +105,7 @@ fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
 fn OverSection(over: Option<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     match over {
-        None => view! { <p class=ITALIC_XS>{move || t!(i18n, not_over)}</p> }.into_any(),
+        None => view! { <p class=ITALIC_XS>{move || t!(i18n, not_full_time)}</p> }.into_any(),
         Some(ov) => view! {
             <div class="text-xs flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 pt-2">
                 <span class="text-gray-400">{move || t!(i18n, football_over)}</span>

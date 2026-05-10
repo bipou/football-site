@@ -1,7 +1,7 @@
 {
   "site_name": "BiPou",
-  "site_slogan": "Football Prediction Experiment",
-  "site_intro": "BiPou, Football Prediction Experiment: exhaustive analysis is NO BETTER than a wild guess?",
+  "site_slogan": "Football Prediction Lab",
+  "site_intro": "BiPou, Football Prediction Lab: exhaustive analysis is NO BETTER than a wild guess?",
   "site_warn": "For entertainment purposes only. May not be accurate. Do not use for betting or gambling!",
 
   "lang_current": "English",
@@ -29,8 +29,9 @@
   "football_tg": "total goals",
   "football_gd": "goal diff",
   "football_over": "Football over:",
-  "not_pred": "Not predicted yet",
-  "not_over": "Not over yet",
+  "not_predicted": "Not predicted",
+  "not_full_time": "Not full time",
+  "no_matches": "No matches",
 
   "register": "Register",
   "sign_in": "Sign in",

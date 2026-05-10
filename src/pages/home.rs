@@ -39,7 +39,7 @@ fn TodaySection(footballs: Vec<Football>) -> impl IntoView {
             </h2>
             {if footballs.is_empty() {
                 view! {
-                    <p class="text-gray-400 text-sm py-4 text-center">"No matches today"</p>
+                    <p class="text-gray-400 text-sm py-4 text-center">{move || t!(i18n, no_matches)}</p>
                 }.into_any()
             } else {
                 view! {
@@ -70,7 +70,7 @@ fn YesterdaySection(footballs: Vec<Football>) -> impl IntoView {
             </h2>
             {if footballs.is_empty() {
                 view! {
-                    <p class="text-gray-400 text-sm py-4 text-center">"No matches to verify"</p>
+                    <p class="text-gray-400 text-sm py-4 text-center">{move || t!(i18n, no_matches)}</p>
                 }.into_any()
             } else {
                 view! {
@@ -81,6 +81,11 @@ fn YesterdaySection(footballs: Vec<Football>) -> impl IntoView {
                     </div>
                 }.into_any()
             }}
+            <div class="mt-4 text-right">
+                <a href="/footballs" class=format!("text-sm text-blue-500 {}", HOVER_UNDERLINE)>
+                    {move || t!(i18n, more)}
+                </a>
+            </div>
         </section>
     }
 }

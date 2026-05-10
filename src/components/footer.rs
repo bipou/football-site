@@ -23,7 +23,7 @@ pub fn Footer() -> impl IntoView {
                     {move || t!(i18n, site_warn)}
                 </p>
                 <p>
-                    {move || t!(i18n, based_on)}
+                    <a href="https://irust.net" target="_blank">{move || t!(i18n, based_on)}</a>
                     " - "
                     {move || t!(i18n, site_name)}
                     " ©2024-2026 "
