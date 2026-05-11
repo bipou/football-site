@@ -146,16 +146,16 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                                     <div class="flex gap-1 flex-wrap">
                                                         {[
                                                             (1i8, "status_publish", "bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300"),
-                                                            (2, "status_sticky", "bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-300"),
-                                                            (3, "status_recommend", "bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:text-orange-300"),
+                                                            (2, "status_hot", "bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-300"),
+                                                            (3, "status_picks", "bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 dark:text-orange-300"),
                                                             (4, "status_both", "bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300"),
                                                             (0, "status_hide", "bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"),
                                                         ].into_iter().map(|(s, key, cls)| {
                                                             let fid3 = fid2.clone();
                                                             let label: String = match key {
                                                                 "status_publish" => t_string!(i18n, status_publish).to_owned(),
-                                                                "status_sticky" => t_string!(i18n, status_sticky).to_owned(),
-                                                                "status_recommend" => t_string!(i18n, status_recommend).to_owned(),
+                                                                "status_hot" => t_string!(i18n, status_hot).to_owned(),
+                                                                "status_picks" => t_string!(i18n, status_picks).to_owned(),
                                                                 "status_hide" => t_string!(i18n, status_hide).to_owned(),
                                                                 _ => "Both".to_string(),
                                                             };

@@ -18,7 +18,7 @@ fn status_class(status: i8) -> &'static str {
 fn status_badge(status: i8) -> &'static str {
     match status {
         4 => "⭐🔥",
-        3 => "⭐ Rec",
+        3 => "⭐ Pick",
         2 => "🔥 Hot",
         1 => "Published",
         0 => "Draft",
@@ -136,13 +136,13 @@ pub fn FootballCard(football: Football) -> impl IntoView {
     view! {
         <div class=card_class>
             <div class="flex items-center justify-between mb-2">
-                <a href=format!("/footballs/{}", football.id) class="font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 no-underline text-sm leading-tight">
+                <a href=format!("/footballs/{}", football.id) class="font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 no-underline text-base leading-tight">
                     {football.home_team} " vs " {football.away_team}
                 </a>
-                <span class="text-xs text-gray-400 ml-2 whitespace-nowrap">{status_badge(football.status)}</span>
+                <span class="text-sm text-gray-400 ml-2 whitespace-nowrap">{status_badge(football.status)}</span>
             </div>
 
-            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 space-x-2">
+            <div class="text-sm text-gray-500 dark:text-gray-400 mb-3 space-x-2">
                 <span>{football.season}</span>
                 <CatBadge name=cat_name/>
                 <span class="text-blue-500">{football.kick_off_at_mdhm8}</span>
@@ -158,7 +158,7 @@ pub fn FootballCard(football: Football) -> impl IntoView {
                         <a href=format!("/footballs?filter=topic&fid={}", t.id) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
                     }).collect::<Vec<_>>()}
                 </div>
-                <span class="text-xs text-gray-400">{move || t!(i18n, football_hits)} {football.hits}</span>
+                <span class="text-sm text-gray-400">{move || t!(i18n, football_hits)} {football.hits}</span>
             </div>
         </div>
     }

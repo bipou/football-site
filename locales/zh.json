@@ -41,9 +41,7 @@
   "copyright": "版权所有",
 
   "footballs_list": "足赛预测列表",
-  "footballs_filter_sticky": "最新热门足球预测",
-  "footballs_filter_recommended": "最新推荐足球预测",
-  "footballs_filter_category": "赛事类别：",
+  "footballs_filter_category": "类别：",
   "football_created": "创建于",
   "football_updated": "更新于",
   "football_keys_tags": "关键词/标签：",
@@ -111,13 +109,12 @@
   "admin_dashboard": "管理后台",
   "admin_footballs": "足球管理",
   "admin_football_detail": "足球详情",
-  "status_publish": "发布",
-  "status_recommend": "推荐",
-  "status_sticky": "置顶",
   "status_hide": "隐藏",
+  "status_publish": "发布",
+  "status_hot": "热门",
+  "status_picks": "推荐",
 
   "loading": "加载中...",
-  "error_not_found": "页面未找到",
-  "go_home": "返回首页",
-  "no_data": "暂无数据"
+  "error_404": "页面未找到",
+  "go_home": "返回首页"
 }

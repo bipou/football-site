@@ -1,4 +1,4 @@
-use crate::i18n::{t, t_string};
+use crate::i18n::{Locale, t, t_string};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;
@@ -9,7 +9,7 @@ use crate::i18n::use_i18n;
 use crate::models::{Category, FootballsResult};
 
 use crate::page_title;
-use crate::utils::constant::NO_UNDERLINE;
+use crate::utils::constant::CAT_ITEM;
 
 // ── Server functions ──────────────────────────────────────────────────────────
 
@@ -33,8 +33,8 @@ pub async fn get_sidebar_categories() -> Result<Vec<Category>, ServerFnError> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FootballsFilter {
     All,
-    Recommended,
-    Sticky,
+    Picks,
+    Hot,
     ByCategory(String),
     ByTopic(String),
 }
@@ -47,8 +47,8 @@ pub async fn get_footballs_page(
 ) -> Result<FootballsResult, ServerFnError> {
     use crate::server::football_db;
     let res = match filter.as_str() {
-        "recommended" => football_db::get_footballs(from, 3, 4).await,
-        "sticky" => football_db::get_footballs(from, 2, 4).await,
+        "picks" => football_db::get_footballs(from, 3, 4).await,
+        "hot" => football_db::get_footballs(from, 2, 4).await,
         "category" => football_db::get_footballs_by_category(&filter_id, from).await,
         "topic" => football_db::get_footballs_by_topic(&filter_id, from).await,
         _ => football_db::get_footballs(from, 1, 4).await,
@@ -82,8 +82,8 @@ pub fn FootballsPage() -> impl IntoView {
     );
 
     let filter_label = move || match filter().as_str() {
-        "recommended" => t_string!(i18n, footballs_filter_recommended),
-        "sticky" => t_string!(i18n, footballs_filter_sticky),
+        "picks" => t_string!(i18n, status_picks),
+        "hot" => t_string!(i18n, status_hot),
         _ => t_string!(i18n, footballs_list),
     };
 
@@ -91,53 +91,48 @@ pub fn FootballsPage() -> impl IntoView {
         <Title text=move || page_title!(i18n, footballs_list)/>
         <Nav/>
         <main class="max-w-6xl mx-auto px-4 py-8">
-            <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
                 {filter_label}
             </h1>
 
-            <div class="flex gap-6">
-                // ── Sidebar: category filters ─────────────────────────────
-                <aside class="hidden lg:block w-48 shrink-0">
-                    <div class="card p-4">
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
-                            {move || t!(i18n, footballs_filter_category)}
-                        </p>
-                        <nav class="space-y-1 text-sm">
-                            <a href="/footballs"
-                               class=format!("block px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-300 {}", NO_UNDERLINE)>
-                                {move || t!(i18n, all)}
-                            </a>
-                            <a href="/footballs?filter=recommended"
-                               class=format!("block px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-300 {}", NO_UNDERLINE)>
-                                {move || t!(i18n, footballs_filter_recommended)}
-                            </a>
-                            <a href="/footballs?filter=sticky"
-                               class=format!("block px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-300 {}", NO_UNDERLINE)>
-                                {move || t!(i18n, footballs_filter_sticky)}
-                            </a>
-                            // Category links from DB
-                            <Suspense fallback=|| ()>
-                                {move || cats_res.get().map(|r| r.ok()).flatten().map(|cats| {
+            // ── Horizontal category filter bar ───────────────────────────
+            <div class="mb-6">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="text-sm text-gray-400 dark:text-gray-500 shrink-0 mr-1">
+                        {move || t!(i18n, footballs_filter_category)}
+                    </span>
+                    <a href="/footballs"
+                       class=format!("{} text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700", CAT_ITEM)>
+                        {move || t!(i18n, all)}
+                    </a>
+                    <a href="/footballs?filter=picks"
+                        class=format!("{} text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50", CAT_ITEM)>
+                        {move || t!(i18n, status_picks)}
+                    </a>
+                    <a href="/footballs?filter=hot"
+                        class=format!("{} text-red-500 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50", CAT_ITEM)>
+                        {move || t!(i18n, status_hot)}
+                    </a>
+                    <Suspense fallback=|| ()>
+                        {move || cats_res.get().map(|r| r.ok()).flatten().map(|cats| {
+                            view! {
+                                {cats.into_iter().map(|cat| {
+                                    let url = format!("/footballs?filter=category&fid={}", cat.id);
+                                    let cat_name = if i18n.get_locale() == Locale::zh { cat.name_zh.clone() } else { cat.name_en.clone() };
                                     view! {
-                                        <div class="border-t border-gray-100 dark:border-gray-700 pt-2 mt-2">
-                                            {cats.into_iter().map(|cat| {
-                                                let url = format!("/footballs?filter=category&fid={}", cat.id);
-                                                view! {
-                                                    <a href=url class=format!("block px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-600 dark:text-gray-400 text-xs {}", NO_UNDERLINE)>
-                                                        {cat.name_en.clone()}
-                                                    </a>
-                                                }
-                                            }).collect::<Vec<_>>()}
-                                        </div>
+                                        <a href=url class=format!("{} text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700", CAT_ITEM)>
+                                            {cat_name}
+                                        </a>
                                     }
-                                })}
-                            </Suspense>
-                        </nav>
-                    </div>
-                </aside>
+                                }).collect::<Vec<_>>()}
+                            }
+                        })}
+                    </Suspense>
+                </div>
+            </div>
 
-                // ── Main content ─────────────────────────────────────────────
-                <div class="flex-1 min-w-0">
+            // ── Main content ─────────────────────────────────────────────
+            <div>
                     <Suspense fallback=move || view! {
                         <div class="flex justify-center py-16">
                             <div class="text-gray-400">{move || t!(i18n, loading)}</div>
@@ -154,7 +149,7 @@ pub fn FootballsPage() -> impl IntoView {
                                     {if data.items.is_empty() {
                                         view! {
                                             <p class="text-center text-gray-400 py-16">
-                                                {move || t!(i18n, no_data)}
+                                                {move || t!(i18n, no_matches)}
                                             </p>
                                         }.into_any()
                                     } else {
@@ -172,7 +167,6 @@ pub fn FootballsPage() -> impl IntoView {
                         })}
                     </Suspense>
                 </div>
-            </div>
         </main>
         <Footer/>
     }

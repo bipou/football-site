@@ -8,6 +8,7 @@ pub const BADGE_GRAY: &str = "badge-gray";
 pub const BADGE_GRAY_NO_UL: &str = "badge-gray no-underline";
 pub const BADGE_GREEN: &str = "badge-green";
 pub const BADGE_RED: &str = "badge-red";
+pub const CAT_ITEM: &str = "px-2 py-1 text-sm no-underline";
 pub const ITALIC: &str = "italic";
 pub const ITALIC_XS: &str = "text-xs text-gray-400 italic";
 

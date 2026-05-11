@@ -120,7 +120,7 @@ fn NotFound() -> impl IntoView {
         <div class="min-h-screen flex items-center justify-center">
             <div class="text-center space-y-4 p-8">
                 <h1 class="text-7xl font-bold text-blue-600">"404"</h1>
-                <p class="text-xl text-gray-500 dark:text-gray-400">{move || t!(i18n, error_not_found)}</p>
+                <p class="text-xl text-gray-500 dark:text-gray-400">{move || t!(i18n, error_404)}</p>
                 <a href="/" class="btn-primary inline-block mt-4">{move || t!(i18n, go_home)}</a>
             </div>
         </div>
