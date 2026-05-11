@@ -1,5 +1,6 @@
 use crate::i18n::{t, use_i18n};
 use crate::page_title;
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -11,6 +12,11 @@ use crate::models::FootballsResult;
 use crate::utils::constant::{
     EMPTY, GRID_2, H1, HOVER_SHADOW, HOVER_UNDERLINE, MAIN, NO_UNDERLINE,
 };
+
+// ── Type aliases ─────────────────────────────────────────────────────────────
+
+type Either3<A, B, C> = Either<A, Either<B, C>>;
+type Either5<A, B, C, D, E> = Either<A, Either<B, Either<C, Either<D, E>>>>;
 
 // ── Server functions ──────────────────────────────────────────────────────────
 
@@ -42,14 +48,14 @@ pub fn AdminPage() -> impl IntoView {
         <Nav/>
         <main class=MAIN>
             {if auth.is_none() {
-                view! {
+                Either::Left(view! {
                     <div class=EMPTY>
                         <p class="text-gray-500 mb-4">"Please sign in to access the admin area."</p>
                         <a href="/sign-in" class="btn-primary">"Sign In"</a>
                     </div>
-                }.into_any()
+                })
             } else {
-                view! {
+                Either::Right(view! {
                     <h1 class=H1>
                         {move || t!(i18n, admin_dashboard)}
                     </h1>
@@ -63,7 +69,7 @@ pub fn AdminPage() -> impl IntoView {
                             <p class="text-sm text-gray-500">"View and manage registered users."</p>
                         </a>
                     </div>
-                }.into_any()
+                })
             }}
         </main>
         <Footer/>
@@ -96,36 +102,36 @@ pub fn AdminFootballsPage() -> impl IntoView {
         <Nav/>
         <main class="max-w-5xl mx-auto px-4 py-8">
             {if auth.is_none() {
-                view! {
+                Either::Left(view! {
                     <div class=EMPTY>
                         <a href="/sign-in" class="btn-primary">"Sign In Required"</a>
                     </div>
-                }.into_any()
+                })
             } else {
-                view! {
+                Either::Right(view! {
                     <h1 class=H1>
                         {move || t!(i18n, admin_footballs)}
                     </h1>
 
                     {move || update_action.value().get().map(|r| match r {
-                        Ok(()) => view! {
+                        Ok(()) => Either::Left(view! {
                             <p class="text-green-500 text-sm mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-2">
                                 "Status updated successfully."
                             </p>
-                        }.into_any(),
-                        Err(e) => view! {
+                        }),
+                        Err(e) => Either::Right(view! {
                             <p class="text-red-500 text-sm mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
                                 {e.to_string()}
                             </p>
-                        }.into_any(),
+                        }),
                     })}
 
                     <Suspense fallback=move || view! { <p class="text-gray-400 text-center py-8">{move || t!(i18n, loading)}</p> }>
                         {move || data.get().map(|result| match result {
-                            Err(e) => view! { <p class="text-red-500">{e.to_string()}</p> }.into_any(),
+                            Err(e) => Either3::<_, _, ()>::Left(view! { <p class="text-red-500">{e.to_string()}</p> }),
                             Ok(d) => {
                                 let pi = d.page_info.clone();
-                                view! {
+                                Either3::Right(Either::<_, ()>::Left(view! {
                                     <div class="space-y-3 mb-8">
                                         {d.items.into_iter().map(|f| {
                                             let fid = f.id.clone();
@@ -135,7 +141,7 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                                     <div class="flex-1 min-w-0">
                                                         <a href=format!("/footballs/{}", fid)
                                                            class=format!("font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 {} text-sm", NO_UNDERLINE)>
-                                                                                                                       {f.home_team.clone()} " vs " {f.away_team.clone()}
+                                                               {f.home_team.clone()} " vs " {f.away_team.clone()}
                                                         </a>
                                                         <p class="text-xs text-gray-400 mt-1">
                                                             {f.season.clone()} " · " {f.kick_off_at_mdhm8.clone()}
@@ -159,11 +165,11 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                                                     <input type="hidden" name="status" value=s.to_string()/>
                                                                     <button type="submit" class=format!("text-xs px-2 py-1 rounded transition-colors {cls}")>
                                                                         {move || match key {
-                                                                            "status_publish" => t!(i18n, status_publish).into_any(),
-                                                                            "status_hot" => t!(i18n, status_hot).into_any(),
-                                                                            "status_picks" => t!(i18n, status_picks).into_any(),
-                                                                            "status_hide" => t!(i18n, status_hide).into_any(),
-                                                                            _ => "Both".into_any(),
+                                                                            "status_publish" => Either5::Left(t!(i18n, status_publish)),
+                                                                            "status_hot" => Either5::Right(Either::Left(t!(i18n, status_hot))),
+                                                                            "status_picks" => Either5::Right(Either::Right(Either::Left(t!(i18n, status_picks)))),
+                                                                            "status_hide" => Either5::Right(Either::Right(Either::Right(Either::Left(t!(i18n, status_hide))))),
+                                                                            _ => Either5::Right(Either::Right(Either::Right(Either::Right("Both")))),
                                                                         }}
                                                                     </button>
                                                                 </ActionForm>
@@ -175,11 +181,11 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                         }).collect::<Vec<_>>()}
                                     </div>
                                     <Pagination page_info=pi base_url="/admin/footballs".to_string()/>
-                                }.into_any()
+                                }))
                             }
                         })}
                     </Suspense>
-                }.into_any()
+                })
             }}
         </main>
         <Footer/>
@@ -200,14 +206,14 @@ pub fn AdminFootballDetailPage() -> impl IntoView {
         <Nav/>
         <main class=MAIN>
             {if auth.is_none() {
-                view! {
+                Either::Left(view! {
                     <div class=EMPTY>
                         <a href="/sign-in" class="btn-primary">"Sign In Required"</a>
                     </div>
-                }.into_any()
+                })
             } else {
                 let detail_url = move || format!("/footballs/{}", id());
-                view! {
+                Either::Right(view! {
                     <div class="flex items-center gap-4 mb-6">
                         <a href="/admin/footballs" class="text-sm text-gray-500 hover:text-blue-600">
                             "← Back to admin list"
@@ -219,9 +225,8 @@ pub fn AdminFootballDetailPage() -> impl IntoView {
                             {move || t!(i18n, admin_football_detail)}
                         </h1>
                     </div>
-                    // Reuse the public detail page component
                     <crate::pages::football::FootballDetailPage/>
-                }.into_any()
+                })
             }}
         </main>
     }

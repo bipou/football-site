@@ -1,4 +1,5 @@
 use crate::i18n::{Locale, t, use_i18n};
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;
@@ -55,6 +56,10 @@ pub async fn get_footballs_page(
     res.map_err(|e| ServerFnError::new(e.to_string()))
 }
 
+// ── Three-way Either aliases ──────────────────────────────────────────────────
+
+type Either3<A, B, C> = Either<A, Either<B, C>>;
+
 // ── Page component ────────────────────────────────────────────────────────────
 
 #[component]
@@ -81,9 +86,9 @@ pub fn FootballsPage() -> impl IntoView {
     );
 
     let filter_label = move || match filter().as_str() {
-        "picks" => t!(i18n, status_picks).into_any(),
-        "hot" => t!(i18n, status_hot).into_any(),
-        _ => t!(i18n, footballs_list).into_any(),
+        "picks" => Either3::Left(t!(i18n, status_picks)),
+        "hot" => Either3::Right(Either::Left(t!(i18n, status_hot))),
+        _ => Either3::Right(Either::Right(t!(i18n, footballs_list))),
     };
 
     view! {
@@ -132,40 +137,38 @@ pub fn FootballsPage() -> impl IntoView {
 
             // ── Main content ─────────────────────────────────────────────
             <div>
-                    <Suspense fallback=move || view! {
-                        <div class="flex justify-center py-16">
-                            <div class="text-gray-400">{move || t!(i18n, loading)}</div>
-                        </div>
-                    }>
-                        {move || footballs_res.get().map(|result| match result {
-                            Err(e) => view! {
-                                <p class="text-red-500 py-8 text-center">{e.to_string()}</p>
-                            }.into_any(),
-                            Ok(data) => {
-                                let pi = data.page_info.clone();
-                                let base = format!("/footballs?filter={}&fid={}", filter(), filter_id());
-                                view! {
-                                    {if data.items.is_empty() {
-                                        view! {
-                                            <p class=format!("text-gray-400 {}", EMPTY)>
-                                                {move || t!(i18n, no_matches)}
-                                            </p>
-                                        }.into_any()
-                                    } else {
-                                        view! {
-                                            <div class=GRID_2>
-                                                {data.items.into_iter().map(|f| view! {
-                                                    <FootballCard football=f/>
-                                                }).collect::<Vec<_>>()}
-                                            </div>
-                                        }.into_any()
-                                    }}
+                <Suspense fallback=move || view! {
+                    <div class="flex justify-center py-16">
+                        <div class="text-gray-400">{move || t!(i18n, loading)}</div>
+                    </div>
+                }>
+                    {move || footballs_res.get().map(|result| match result {
+                        Err(e) => Either3::Left(view! {
+                            <p class="text-red-500 py-8 text-center">{e.to_string()}</p>
+                        }),
+                        Ok(data) => {
+                            let pi = data.page_info.clone();
+                            let base = format!("/footballs?filter={}&fid={}", filter(), filter_id());
+                            if data.items.is_empty() {
+                                Either3::Right(Either::Left(view! {
+                                    <p class=format!("text-gray-400 {}", EMPTY)>
+                                        {move || t!(i18n, no_matches)}
+                                    </p>
+                                }))
+                            } else {
+                                Either3::Right(Either::Right(view! {
+                                    <div class=GRID_2>
+                                        {data.items.into_iter().map(|f| view! {
+                                            <FootballCard football=f/>
+                                        }).collect::<Vec<_>>()}
+                                    </div>
                                     <Pagination page_info=pi base_url=base/>
-                                }.into_any()
+                                }))
                             }
-                        })}
-                    </Suspense>
-                </div>
+                        }
+                    })}
+                </Suspense>
+            </div>
         </main>
         <Footer/>
     }

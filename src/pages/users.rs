@@ -4,6 +4,7 @@ use crate::site_title;
 use crate::utils::constant::{
     BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_2, H1, MAIN,
 };
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -18,6 +19,10 @@ const ITALIC_CLASS: &str = "text-sm text-gray-400 italic";
 const WEBSITE_LINK_CLASS: &str = "text-blue-500 hover:underline ml-1 break-all";
 const PROSE_CLASS: &str = "prose prose-sm dark:prose-invert max-w-none";
 const RISK_CLASS: &str = "text-xs text-gray-400 text-center mt-6";
+
+// ── Type alias ───────────────────────────────────────────────────────────
+
+type Either3<A, B, C> = Either<A, Either<B, C>>;
 
 #[server]
 pub async fn get_users_page(from: i64) -> Result<UsersResult, ServerFnError> {
@@ -58,10 +63,12 @@ pub fn UsersPage() -> impl IntoView {
             </h1>
             <Suspense fallback=move || view! { <div class={format!("{} text-gray-400", EMPTY)}>{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
-                    Err(e) => view! { <p class="text-red-500 text-center">{e.to_string()}</p> }.into_any(),
+                    Err(e) => Either::Left(view! {
+                        <p class="text-red-500 text-center">{e.to_string()}</p>
+                    }),
                     Ok(d) => {
                         let pi = d.page_info.clone();
-                        view! {
+                        Either::Right(view! {
                             <div class={format!("{} mb-8", GRID_2)}>
                                 {d.items.into_iter().map(|u| {
                                     let url = format!("/users/{}", u.username);
@@ -79,25 +86,158 @@ pub fn UsersPage() -> impl IntoView {
                                             </div>
                                             <p class="text-xs text-gray-400">{move || t!(i18n, registration_time)} {u.created_at}</p>
                                             {if !u.keywords.is_empty() {
-                                                view! {
+                                                Either::Left(view! {
                                                     <div class="flex flex-wrap gap-1 mt-2">
                                                         {u.keywords.into_iter().take(5).map(|t| view! {
                                                             <span class=BADGE_BLUE>{t.name}</span>
                                                         }).collect::<Vec<_>>()}
                                                     </div>
-                                                }.into_any()
-                                            } else { ().into_any() }}
+                                                })
+                                            } else {
+                                                Either::Right(())
+                                            }}
                                         </a>
                                     }
                                 }).collect::<Vec<_>>()}
                             </div>
                             <Pagination page_info=pi base_url="/users".to_string()/>
-                        }.into_any()
+                        })
                     }
                 })}
             </Suspense>
         </main>
         <Footer/>
+    }
+}
+
+// ── User profile sub-components ──────────────────────────────────────────
+
+#[component]
+fn WebsiteLink(website: String) -> impl IntoView {
+    let i18n = use_i18n();
+    if website.is_empty() {
+        Either::Left(())
+    } else {
+        let href = website.clone();
+        Either::Right(view! {
+            <p class="text-sm mb-2">
+                <span class="text-gray-500">{move || t!(i18n, user_website)} </span>
+                <a href=href target="_blank" class=WEBSITE_LINK_CLASS>
+                    {website}
+                </a>
+            </p>
+        })
+    }
+}
+
+#[component]
+fn IntroSection(intro_html: String) -> impl IntoView {
+    let i18n = use_i18n();
+    if intro_html.is_empty() {
+        Either::Left(())
+    } else {
+        Either::Right(view! {
+            <div class="card p-6 mb-6">
+                <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">
+                    {move || t!(i18n, user_intro_label)}
+                </h2>
+                <article class=PROSE_CLASS inner_html=intro_html/>
+            </div>
+        })
+    }
+}
+
+#[component]
+fn KeywordsTags(
+    keywords: Vec<crate::models::Topic>,
+    topics: Vec<crate::models::Topic>,
+) -> impl IntoView {
+    let i18n = use_i18n();
+    if keywords.is_empty() && topics.is_empty() {
+        Either::Left(())
+    } else {
+        Either::Right(view! {
+            <div class="card p-6">
+                {if !keywords.is_empty() {
+                    Either::Left(view! {
+                        <div class="mb-4">
+                            <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_keys_tags)}</p>
+                            <div class={FLEX_WRAP_GAP}>
+                                {keywords.iter().map(|t| view! {
+                                    <span class=BADGE_BLUE>{t.name.clone()}</span>
+                                }).collect::<Vec<_>>()}
+                            </div>
+                        </div>
+                    })
+                } else {
+                    Either::Right(())
+                }}
+                {if !topics.is_empty() {
+                    Either::Left(view! {
+                        <div>
+                            <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_keys_tags)}</p>
+                            <div class={FLEX_WRAP_GAP}>
+                                {topics.iter().map(|t| {
+                                    let url = format!("/footballs?filter=topic&fid={}", t.id);
+                                    view! {
+                                        <a href=url class=BADGE_GRAY_NO_UL>
+                                            {t.name.clone()}
+                                        </a>
+                                    }
+                                }).collect::<Vec<_>>()}
+                            </div>
+                        </div>
+                    })
+                } else {
+                    Either::Right(())
+                }}
+            </div>
+        })
+    }
+}
+
+#[component]
+fn ContactInfo(user: User) -> impl IntoView {
+    let i18n = use_i18n();
+    if !user.phone_number.is_empty() && user.phone_public {
+        Either::Left(view! {
+            <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{user.phone_number}</p>
+        })
+    } else {
+        Either::Right(())
+    }
+}
+
+#[component]
+fn ImInfo(user: User) -> impl IntoView {
+    let i18n = use_i18n();
+    if !user.im_account.is_empty() && user.im_public {
+        Either::Left(view! {
+            <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{user.im_account}</p>
+        })
+    } else {
+        Either::Right(())
+    }
+}
+
+#[component]
+fn ContactSection(is_signed_in: bool, user: User) -> impl IntoView {
+    let i18n = use_i18n();
+    if is_signed_in {
+        Either::Left(view! {
+            <div class="text-sm space-y-1">
+                <ContactInfo user=user.clone()/>
+                <ImInfo user=user/>
+            </div>
+        })
+    } else {
+        Either::Right(view! {
+            <p class=ITALIC_CLASS>
+                {move || t!(i18n, user_view_contact)}
+                {" "}
+                <a href="/sign-in" class="text-blue-500">{move || t!(i18n, sign_in)}</a>
+            </p>
+        })
     }
 }
 
@@ -118,18 +258,27 @@ pub fn UserProfilePage() -> impl IntoView {
         <main class={MAIN}>
             <Suspense fallback=move || view! { <div class={format!("{} text-gray-400", EMPTY)}>{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
-                    Err(e) => view! { <p class="text-red-500 text-center">{e.to_string()}</p> }.into_any(),
-                    Ok(None) => view! {
+                    Err(e) => Either3::Left(view! {
+                        <p class="text-red-500 text-center">{e.to_string()}</p>
+                    }),
+                    Ok(None) => Either3::Right(Either::Left(view! {
                         <div class={EMPTY}>
                             <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">User not found</h1>
                             <a href="/users" class="btn-primary">Back to users</a>
                         </div>
-                    }.into_any(),
+                    })),
                     Ok(Some(user)) => {
                         let is_signed_in = auth.is_some();
-                        let title = format!("{} – {}", user.nickname, site_title!(i18n));
+                        let nickname = user.nickname.clone();
+                        let username = user.username.clone();
+                        let created_at = user.created_at.clone();
+                        let title = format!("{} – {}", nickname, site_title!(i18n));
                         let initial = user.nickname.chars().next().unwrap_or('?');
-                        view! {
+                        let website = user.website.clone();
+                        let intro_html = user.introduction_html.clone();
+                        let keywords = user.keywords.clone();
+                        let topics = user.topics.clone();
+                        Either3::Right(Either::Right(view! {
                             <Title text=title/>
 
                             <div class="card p-6 mb-6">
@@ -138,102 +287,23 @@ pub fn UserProfilePage() -> impl IntoView {
                                         {initial.to_string()}
                                     </div>
                                     <div>
-                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{user.nickname}</h1>
-                                        <p class="text-sm text-gray-500">@ {user.username}</p>
-                                        <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {user.created_at}</p>
+                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{nickname}</h1>
+                                        <p class="text-sm text-gray-500">@ {username}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {created_at}</p>
                                     </div>
                                 </div>
 
-                                {if !user.website.is_empty() {
-                                    let website_href = user.website.clone();
-                                    let website_text = user.website.clone();
-                                    view! {
-                                        <p class="text-sm mb-2">
-                                            <span class="text-gray-500">{move || t!(i18n, user_website)} </span>
-                                            <a href=website_href target="_blank" class=WEBSITE_LINK_CLASS>
-                                                {website_text}
-                                            </a>
-                                        </p>
-                                    }.into_any()
-                                } else { ().into_any() }}
-
-                                {if is_signed_in {
-                                    view! {
-                                        <div class="text-sm space-y-1">
-                                            {if !user.phone_number.is_empty() && user.phone_public {
-                                                let phone = user.phone_number.clone();
-                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{phone}</p> }
-                                                    .into_any()
-                                            } else { ().into_any() }}
-                                            {if !user.im_account.is_empty() && user.im_public {
-                                                let im = user.im_account.clone();
-                                                view! { <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{im}</p> }
-                                                    .into_any()
-                                            } else { ().into_any() }}
-                                        </div>
-                                    }.into_any()
-                                } else {
-                                    view! {
-                                        <p class=ITALIC_CLASS>
-                                            {move || t!(i18n, user_view_contact)}
-                                            {" "}
-                                            <a href="/sign-in" class="text-blue-500">{move || t!(i18n, sign_in)}</a>
-                                        </p>
-                                    }.into_any()
-                                }}
+                                <WebsiteLink website=website/>
+                                <ContactSection is_signed_in=is_signed_in user=user/>
                             </div>
 
-                            {if !user.introduction_html.is_empty() {
-                                view! {
-                                    <div class="card p-6 mb-6">
-                                        <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">
-                                            {move || t!(i18n, user_intro_label)}
-                                        </h2>
-                                        <article class=PROSE_CLASS inner_html=user.introduction_html/>
-                                    </div>
-                                }.into_any()
-                            } else { ().into_any() }}
-
-                            {if !user.keywords.is_empty() || !user.topics.is_empty() {
-                                view! {
-                                    <div class="card p-6">
-                                        {if !user.keywords.is_empty() {
-                                            view! {
-                                                <div class="mb-4">
-                                                    <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_keys_tags)}</p>
-                                                    <div class={FLEX_WRAP_GAP}>
-                                                        {user.keywords.iter().map(|t| view! {
-                                                            <span class=BADGE_BLUE>{t.name.clone()}</span>
-                                                        }).collect::<Vec<_>>()}
-                                                    </div>
-                                                </div>
-                                            }.into_any()
-                                        } else { ().into_any() }}
-                                        {if !user.topics.is_empty() {
-                                            view! {
-                                                <div>
-                                                    <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_keys_tags)}</p>
-                                                    <div class={FLEX_WRAP_GAP}>
-                                                        {user.topics.iter().map(|t| {
-                                                            let url = format!("/footballs?filter=topic&fid={}", t.id);
-                                                            view! {
-                                                                <a href=url class=BADGE_GRAY_NO_UL>
-                                                                    {t.name.clone()}
-                                                                </a>
-                                                            }
-                                                        }).collect::<Vec<_>>()}
-                                                    </div>
-                                                </div>
-                                            }.into_any()
-                                        } else { ().into_any() }}
-                                    </div>
-                                }.into_any()
-                            } else { ().into_any() }}
+                            <IntroSection intro_html=intro_html/>
+                            <KeywordsTags keywords=keywords topics=topics/>
 
                             <p class=RISK_CLASS>
                                 {move || t!(i18n, user_risk_tip)}
                             </p>
-                        }.into_any()
+                        }))
                     }
                 })}
             </Suspense>

@@ -4,6 +4,7 @@ use crate::utils::constant::{
     BADGE_BLUE_NO_UL, BADGE_GRAY, BADGE_GREEN, BADGE_RED, FLEX_BETWEEN, HOVER_SHADOW, ITALIC,
     ITALIC_XS, TEXT_MUTED, TEXT_SUBTLE, TEXT_XS_MUTED,
 };
+use leptos::either::Either;
 use leptos::prelude::*;
 
 fn status_class(status: i8) -> &'static str {
@@ -32,9 +33,9 @@ fn CatBadge(#[prop(into)] name: Signal<String>) -> impl IntoView {
     move || {
         let n = name.get();
         if n.is_empty() {
-            ().into_any()
+            Either::Left(())
         } else {
-            view! { <span class=BADGE_GRAY>{n}</span> }.into_any()
+            Either::Right(view! { <span class=BADGE_GRAY>{n}</span> })
         }
     }
 }
@@ -43,11 +44,15 @@ fn CatBadge(#[prop(into)] name: Signal<String>) -> impl IntoView {
 fn OddsSection(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
     let i18n = use_i18n();
     if odds.is_empty() {
-        return view! { <p class=format!("{} {} mb-2", TEXT_XS_MUTED, ITALIC)>{move || t!(i18n, not_predicted)}</p> }.into_any();
+        return Either::Left(view! {
+            <p class=format!("{} {} mb-2", TEXT_XS_MUTED, ITALIC)>
+                {move || t!(i18n, not_predicted)}
+            </p>
+        });
     }
     let init = odds.first().cloned();
     let last = odds.last().cloned();
-    view! {
+    Either::Right(view! {
         <div class="text-xs space-y-1 mb-2">
             {init.map(|o| view! {
                 <div class="flex items-center gap-2">
@@ -66,18 +71,18 @@ fn OddsSection(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
                 </div>
             }) } else { None })}
         </div>
-    }.into_any()
+    })
 }
 
 #[component]
 fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     if preds.is_empty() {
-        return ().into_any();
+        return Either::Left(());
     }
     let init = preds.first().cloned();
     let last = preds.last().cloned();
-    view! {
+    Either::Right(view! {
         <div class="text-xs space-y-1 mb-2 border-t border-gray-100 dark:border-gray-700 pt-2">
             {init.map(|c| view! {
                 <div class="flex items-center gap-2 flex-wrap">
@@ -102,15 +107,17 @@ fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
                 </div>
             }) } else { None })}
         </div>
-    }.into_any()
+    })
 }
 
 #[component]
 fn OverSection(over: Option<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     match over {
-        None => view! { <p class=ITALIC_XS>{move || t!(i18n, not_full_time)}</p> }.into_any(),
-        Some(ov) => view! {
+        None => Either::Left(view! {
+            <p class=ITALIC_XS>{move || t!(i18n, not_full_time)}</p>
+        }),
+        Some(ov) => Either::Right(view! {
             <div class="text-xs flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 pt-2">
                 <span class="text-gray-400">{move || t!(i18n, football_over)}</span>
                 <span class="font-semibold text-blue-700 dark:text-blue-300">
@@ -119,7 +126,7 @@ fn OverSection(over: Option<crate::models::FootballOver>) -> impl IntoView {
                     " | " {move || t!(i18n, football_tg)} ": " {ov.tg}
                 </span>
             </div>
-        }.into_any(),
+        }),
     }
 }
 
@@ -175,5 +182,4 @@ pub fn FootballCard(football: Football) -> impl IntoView {
             </div>
         </div>
     }
-    .into_any()
 }

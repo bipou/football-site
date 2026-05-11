@@ -38,5 +38,4 @@ pub fn Footer() -> impl IntoView {
             </div>
         </footer>
     }
-    .into_any()
 }

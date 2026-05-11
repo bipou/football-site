@@ -1,5 +1,6 @@
 use crate::i18n::t;
 use crate::site_title;
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use serde::{Deserialize, Serialize};
@@ -8,7 +9,7 @@ use crate::components::{FootballCard, Footer, Nav};
 use crate::i18n::use_i18n;
 use crate::models::Football;
 
-use crate::utils::constant::{HOVER_UNDERLINE, WIDE, TEXT_SUBTLE};
+use crate::utils::constant::{HOVER_UNDERLINE, TEXT_SUBTLE, WIDE};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomeData {
@@ -38,17 +39,17 @@ fn TodaySection(footballs: Vec<Football>) -> impl IntoView {
                 {move || t!(i18n, footballs_today)}
             </h2>
             {if footballs.is_empty() {
-                view! {
+                Either::Left(view! {
                     <p class="text-gray-400 text-sm py-4 text-center">{move || t!(i18n, no_matches)}</p>
-                }.into_any()
+                })
             } else {
-                view! {
+                Either::Right(view! {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {footballs.into_iter().map(|f| view! {
                             <FootballCard football=f/>
                         }).collect::<Vec<_>>()}
                     </div>
-                }.into_any()
+                })
             }}
             <div class="mt-4 text-right">
                 <a href="/footballs" class=format!("text-sm text-blue-500 {}", HOVER_UNDERLINE)>
@@ -69,17 +70,17 @@ fn YesterdaySection(footballs: Vec<Football>) -> impl IntoView {
                 {move || t!(i18n, footballs_yesterday)}
             </h2>
             {if footballs.is_empty() {
-                view! {
+                Either::Left(view! {
                     <p class="text-gray-400 text-sm py-4 text-center">{move || t!(i18n, no_matches)}</p>
-                }.into_any()
+                })
             } else {
-                view! {
+                Either::Right(view! {
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {footballs.into_iter().map(|f| view! {
                             <FootballCard football=f/>
                         }).collect::<Vec<_>>()}
                     </div>
-                }.into_any()
+                })
             }}
             <div class="mt-4 text-right">
                 <a href="/footballs" class=format!("text-sm text-blue-500 {}", HOVER_UNDERLINE)>
@@ -114,15 +115,16 @@ pub fn HomePage() -> impl IntoView {
                 </div>
             }>
                 {move || data.get().map(|result| match result {
-                    Err(e) => view! { <p class="text-red-500 text-center py-8">{e.to_string()}</p> }.into_any(),
-                    Ok(d) => view! {
+                    Err(e) => Either::Left(view! {
+                        <p class="text-red-500 text-center py-8">{e.to_string()}</p>
+                    }),
+                    Ok(d) => Either::Right(view! {
                         <TodaySection footballs=d.jt/>
                         <YesterdaySection footballs=d.zt/>
-                    }.into_any(),
+                    }),
                 })}
             </Suspense>
         </main>
         <Footer/>
     }
-    .into_any()
 }

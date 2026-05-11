@@ -1,11 +1,16 @@
 use crate::i18n::{t, use_i18n};
 use crate::page_title;
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
 use crate::components::{Footer, Nav};
 use crate::utils::constant::{GRID_2, H1, HOVER_UNDERLINE, TEXT_SUBTLE};
+
+// ── Type alias ───────────────────────────────────────────────────────────
+type Either4<A, B, C, D> = Either<A, Either<B, Either<C, D>>>;
+type Either3<A, B, C> = Either<A, Either<B, C>>;
 
 // ── Sign In server function ───────────────────────────────────────────────────
 
@@ -157,13 +162,13 @@ pub fn SignInPage() -> impl IntoView {
                     // Error
                     {move || action.value().get().and_then(|r| r.err()).map(|e| {
                         let msg = move || if e.to_string().contains("sign_in_incorrect") {
-                            t!(i18n, sign_in_incorrect).into_any()
+                            Either4::Left(t!(i18n, sign_in_incorrect))
                         } else if e.to_string().contains("sign_in_not_activation") {
-                            t!(i18n, sign_in_not_activation).into_any()
+                            Either4::Right(Either::Left(t!(i18n, sign_in_not_activation)))
                         } else if e.to_string().contains("sign_in_banned") {
-                            t!(i18n, sign_in_banned).into_any()
+                            Either4::Right(Either::Right(Either::Left(t!(i18n, sign_in_banned))))
                         } else {
-                            t!(i18n, sign_in_security_problem).into_any()
+                            Either4::Right(Either::Right(Either::Right(t!(i18n, sign_in_security_problem))))
                         };
                         view! { <p class="text-red-500 text-sm text-center">{msg}</p> }
                     })}
@@ -360,9 +365,9 @@ pub fn UserActivatePage() -> impl IntoView {
                 </h1>
                 <Suspense fallback=|| view! { <p class="text-gray-400">"Activating..."</p> }>
                     {move || activate_res.get().map(|result| match result {
-                        Err(e) => view! { <p class="text-red-500">{e.to_string()}</p> }.into_any(),
-                        Ok(None) => view! { <p class="text-gray-500">"User not found."</p> }.into_any(),
-                        Ok(Some(nickname)) => view! {
+                        Err(e) => Either3::Left(view! { <p class="text-red-500">{e.to_string()}</p> }),
+                        Ok(None) => Either3::Right(Either::Left(view! { <p class="text-gray-500">"User not found."</p> })),
+                        Ok(Some(nickname)) => Either3::Right(Either::Right(view! {
                             <div class="space-y-4">
                                 <div class="text-5xl">"✅"</div>
                                 <p class="text-green-600 dark:text-green-400 font-semibold text-lg">
@@ -372,7 +377,7 @@ pub fn UserActivatePage() -> impl IntoView {
                                     {move || t!(i18n, sign_in)}
                                 </a>
                             </div>
-                        }.into_any(),
+                        })),
                     })}
                 </Suspense>
 
@@ -390,12 +395,12 @@ pub fn UserActivatePage() -> impl IntoView {
                     </ActionForm>
                     </div>
                     {move || resend_action.value().get().map(|r| match r {
-                        Ok(()) => view! {
+                        Ok(()) => Either::Left(view! {
                             <p class="text-green-500 text-sm mt-2">{move || t!(i18n, user_re_activate)}</p>
-                        }.into_any(),
-                        Err(e) => view! {
+                        }),
+                        Err(e) => Either::Right(view! {
                             <p class="text-red-500 text-sm mt-2">{e.to_string()}</p>
-                        }.into_any(),
+                        }),
                     })}
                 </div>
 

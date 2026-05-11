@@ -1,9 +1,10 @@
-use crate::i18n::{t, use_i18n, Locale};
+use crate::i18n::{Locale, t, use_i18n};
 use crate::site_title;
 use crate::utils::constant::{
     BADGE_BLUE_NO_UL, BADGE_GRAY, CARD_SECTION, EMPTY, FLEX_WRAP_GAP, ITALIC, MAIN, SECTION_H2,
     TEXT_XS_MUTED,
 };
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
@@ -47,8 +48,10 @@ fn MatchHeader(f: Football) -> impl IntoView {
                     <div class="text-sm text-gray-500 space-x-3">
                         <span>{move || t!(i18n, football_season)} " " {f.season}</span>
                         {move || if !cat.get().is_empty() {
-                            view! { <span class=BADGE_GRAY>{cat.get()}</span> }.into_any()
-                        } else { ().into_any() }}
+                            Either::Left(view! { <span class=BADGE_GRAY>{cat.get()}</span> })
+                        } else {
+                            Either::Right(())
+                        }}
                     </div>
                 </div>
                 <div class="text-right text-sm text-gray-500">
@@ -70,17 +73,17 @@ fn MatchHeader(f: Football) -> impl IntoView {
 fn OddsTable(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
     let i18n = use_i18n();
     if odds.is_empty() {
-        return view! {
+        return Either::Left(view! {
             <div class=CARD_SECTION>
                 <p class=format!("text-gray-400 text-sm {}", ITALIC)>
                     {move || t!(i18n, not_predicted)}
                 </p>
             </div>
-        }.into_any();
+        });
     }
     let init = odds.first().cloned();
     let last = odds.last().cloned();
-    view! {
+    Either::Right(view! {
         <div class=CARD_SECTION>
             <h2 class=SECTION_H2>"Odds"</h2>
             <div class="overflow-x-auto">
@@ -117,24 +120,24 @@ fn OddsTable(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
                 </table>
             </div>
         </div>
-    }.into_any()
+    })
 }
 
 #[component]
 fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     if calcs.is_empty() {
-        return view! {
+        return Either::Left(view! {
             <div class=CARD_SECTION>
                 <p class=format!("text-gray-400 text-sm {}", ITALIC)>
                     {move || t!(i18n, not_predicted)}
                 </p>
             </div>
-        }.into_any();
+        });
     }
     let init = calcs.first().cloned();
     let last = calcs.last().cloned();
-    view! {
+    Either::Right(view! {
         <div class=CARD_SECTION>
             <h2 class=SECTION_H2>"Predictions"</h2>
             <div class="overflow-x-auto">
@@ -174,7 +177,7 @@ fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
                 </table>
             </div>
         </div>
-    }.into_any()
+    })
 }
 
 #[component]
@@ -184,10 +187,10 @@ fn OverDetail(football_over: Option<crate::models::FootballOver>) -> impl IntoVi
         <div class=CARD_SECTION>
             <h2 class=SECTION_H2>{move || t!(i18n, football_over)}</h2>
             {match football_over {
-                None => view! {
+                None => Either::Left(view! {
                     <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_full_time)}</p>
-                }.into_any(),
-                Some(ov) => view! {
+                }),
+                Some(ov) => Either::Right(view! {
                     <div class="flex gap-6 flex-wrap text-sm">
                         <div><span class="text-gray-500">{move || t!(i18n, football_s)} ": "</span>
                             <span class="font-bold text-lg text-blue-700 dark:text-blue-300">{ov.s}</span></div>
@@ -196,7 +199,7 @@ fn OverDetail(football_over: Option<crate::models::FootballOver>) -> impl IntoVi
                         <div><span class="text-gray-500">{move || t!(i18n, football_tg)} ": "</span>
                             <span class="font-semibold">{ov.tg}</span></div>
                     </div>
-                }.into_any(),
+                }),
             }}
         </div>
     }
@@ -206,9 +209,9 @@ fn OverDetail(football_over: Option<crate::models::FootballOver>) -> impl IntoVi
 fn DetailTopicsSection(topics: Vec<crate::models::Topic>) -> impl IntoView {
     let i18n = use_i18n();
     if topics.is_empty() {
-        ().into_any()
+        Either::Left(())
     } else {
-        view! {
+        Either::Right(view! {
             <div class="card p-4 mb-6">
                 <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, football_keys_tags)}</p>
                 <div class=FLEX_WRAP_GAP>
@@ -217,7 +220,7 @@ fn DetailTopicsSection(topics: Vec<crate::models::Topic>) -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-        }.into_any()
+        })
     }
 }
 
@@ -239,6 +242,9 @@ fn FootballDetail(f: Football) -> impl IntoView {
     }
 }
 
+// ── Three-way view type alias ───────────────────────────────────────────
+type DetailResult<A, B, C> = Either<A, Either<B, C>>;
+
 #[component]
 pub fn FootballDetailPage() -> impl IntoView {
     let i18n = use_i18n();
@@ -258,18 +264,19 @@ pub fn FootballDetailPage() -> impl IntoView {
                 </div>
             }>
                 {move || data.get().map(|result| match result {
-                    Err(e) => view! { <p class="text-red-500 text-center py-8">{e.to_string()}</p> }.into_any(),
-                    Ok(None) => view! {
+                    Err(e) => DetailResult::Left(view! {
+                        <p class="text-red-500 text-center py-8">{e.to_string()}</p>
+                    }),
+                    Ok(None) => DetailResult::Right(Either::Left(view! {
                         <div class=EMPTY>
                             <p class="text-gray-500">"Football match not found."</p>
                             <a href="/footballs" class="btn-primary mt-4 inline-block">"Back to list"</a>
                         </div>
-                    }.into_any(),
-                    Ok(Some(f)) => view! { <FootballDetail f=f/> }.into_any(),
+                    })),
+                    Ok(Some(f)) => DetailResult::Right(Either::Right(view! { <FootballDetail f=f/> })),
                 })}
             </Suspense>
         </main>
         <Footer/>
     }
-    .into_any()
 }

@@ -1,4 +1,5 @@
 use crate::i18n::t;
+use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_router::components::A;
 
@@ -27,7 +28,7 @@ extern "C" {
     fn toggle_theme();
 }
 
-use crate::utils::constant::{HOVER_NO_UNDERLINE, NO_UNDERLINE, BG_CARD, FLEX_BETWEEN, TEXT_MUTED};
+use crate::utils::constant::{BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NO_UNDERLINE, TEXT_MUTED};
 
 // ── Sub-components ────────────────────────────────────────────────────────
 
@@ -163,23 +164,23 @@ fn AuthSection() -> impl IntoView {
     let auth = use_auth();
     move || {
         if let Some(user) = auth.clone() {
-            view! {
+            Either::Left(view! {
                 <span class="text-gray-700 dark:text-gray-200 font-medium hidden sm:inline text-base">
                     {user.username.clone()}
                 </span>
                 <A href="/sign-out" attr:class=format!("text-sm text-gray-500 hover:text-red-500 {}", NO_UNDERLINE)>
                     {move || t!(i18n, sign_out)}
                 </A>
-            }.into_any()
+            })
         } else {
-            view! {
+            Either::Right(view! {
                 <A href="/sign-in" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
                     {move || t!(i18n, sign_in)}
                 </A>
                 <A href="/register" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
                     {move || t!(i18n, register)}
                 </A>
-            }.into_any()
+            })
         }
     }
 }
@@ -224,5 +225,4 @@ pub fn Nav() -> impl IntoView {
             </div>
         </nav>
     }
-    .into_any()
 }
