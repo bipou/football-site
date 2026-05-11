@@ -118,7 +118,7 @@ fn LangDropdown() -> impl IntoView {
             >
                 <button
                     on:click=move |_| { i18n.set_locale(Locale::zh); set_open.set(false); }
-                    class=move || format!("block w-full text-left px-3 py-1.5 text-xs border-0 cursor-pointer {} {}",
+                    class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
                         if i18n.get_locale() == Locale::zh { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
                         else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
                         NO_UNDERLINE)
@@ -127,7 +127,7 @@ fn LangDropdown() -> impl IntoView {
                 </button>
                 <button
                     on:click=move |_| { i18n.set_locale(Locale::en); set_open.set(false); }
-                    class=move || format!("block w-full text-left px-3 py-1.5 text-xs border-0 cursor-pointer {} {}",
+                    class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
                         if i18n.get_locale() != Locale::zh { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
                         else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
                         NO_UNDERLINE)
