@@ -1,15 +1,14 @@
-use crate::i18n::{Locale, t, t_string};
+use crate::i18n::{Locale, t, use_i18n};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;
 use serde::{Deserialize, Serialize};
 
 use crate::components::{FootballCard, Footer, Nav, Pagination};
-use crate::i18n::use_i18n;
 use crate::models::{Category, FootballsResult};
 
 use crate::page_title;
-use crate::utils::constant::CAT_ITEM;
+use crate::utils::constant::{EMPTY, GRID_2, WIDE};
 
 // ── Server functions ──────────────────────────────────────────────────────────
 
@@ -82,35 +81,35 @@ pub fn FootballsPage() -> impl IntoView {
     );
 
     let filter_label = move || match filter().as_str() {
-        "picks" => t_string!(i18n, status_picks),
-        "hot" => t_string!(i18n, status_hot),
-        _ => t_string!(i18n, footballs_list),
+        "picks" => t!(i18n, status_picks).into_any(),
+        "hot" => t!(i18n, status_hot).into_any(),
+        _ => t!(i18n, footballs_list).into_any(),
     };
 
     view! {
         <Title text=move || page_title!(i18n, footballs_list)/>
         <Nav/>
-        <main class="max-w-6xl mx-auto px-4 py-8">
+        <main class=WIDE>
             <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
                 {filter_label}
             </h1>
 
             // ── Horizontal category filter bar ───────────────────────────
             <div class="mb-6">
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <nav class="cat-bar flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span class="text-sm text-gray-400 dark:text-gray-500 shrink-0 mr-1">
                         {move || t!(i18n, footballs_filter_category)}
                     </span>
                     <a href="/footballs"
-                       class=format!("{} text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700", CAT_ITEM)>
+                       class="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                         {move || t!(i18n, all)}
                     </a>
                     <a href="/footballs?filter=picks"
-                        class=format!("{} text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50", CAT_ITEM)>
+                        class="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50">
                         {move || t!(i18n, status_picks)}
                     </a>
                     <a href="/footballs?filter=hot"
-                        class=format!("{} text-red-500 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50", CAT_ITEM)>
+                        class="text-red-500 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50">
                         {move || t!(i18n, status_hot)}
                     </a>
                     <Suspense fallback=|| ()>
@@ -120,7 +119,7 @@ pub fn FootballsPage() -> impl IntoView {
                                     let url = format!("/footballs?filter=category&fid={}", cat.id);
                                     let cat_name = if i18n.get_locale() == Locale::zh { cat.name_zh.clone() } else { cat.name_en.clone() };
                                     view! {
-                                        <a href=url class=format!("{} text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700", CAT_ITEM)>
+                                        <a href=url class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
                                             {cat_name}
                                         </a>
                                     }
@@ -128,7 +127,7 @@ pub fn FootballsPage() -> impl IntoView {
                             }
                         })}
                     </Suspense>
-                </div>
+                </nav>
             </div>
 
             // ── Main content ─────────────────────────────────────────────
@@ -148,13 +147,13 @@ pub fn FootballsPage() -> impl IntoView {
                                 view! {
                                     {if data.items.is_empty() {
                                         view! {
-                                            <p class="text-center text-gray-400 py-16">
+                                            <p class=format!("text-gray-400 {}", EMPTY)>
                                                 {move || t!(i18n, no_matches)}
                                             </p>
                                         }.into_any()
                                     } else {
                                         view! {
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class=GRID_2>
                                                 {data.items.into_iter().map(|f| view! {
                                                     <FootballCard football=f/>
                                                 }).collect::<Vec<_>>()}

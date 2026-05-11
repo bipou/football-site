@@ -1,7 +1,9 @@
 use crate::i18n::t;
 use crate::page_title;
 use crate::site_title;
-use crate::utils::constant::{BADGE_BLUE, BADGE_GRAY_NO_UL};
+use crate::utils::constant::{
+    BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_2, H1, MAIN,
+};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
@@ -50,17 +52,17 @@ pub fn UsersPage() -> impl IntoView {
     view! {
         <Title text=move || page_title!(i18n, users_list)/>
         <Nav/>
-        <main class="max-w-4xl mx-auto px-4 py-8">
-            <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+        <main class={MAIN}>
+            <h1 class={H1}>
                 {move || t!(i18n, users_list)}
             </h1>
-            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{move || t!(i18n, loading)}</div> }>
+            <Suspense fallback=move || view! { <div class={format!("{} text-gray-400", EMPTY)}>{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
                     Err(e) => view! { <p class="text-red-500 text-center">{e.to_string()}</p> }.into_any(),
                     Ok(d) => {
                         let pi = d.page_info.clone();
                         view! {
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <div class={format!("{} mb-8", GRID_2)}>
                                 {d.items.into_iter().map(|u| {
                                     let url = format!("/users/{}", u.username);
                                     let initial = u.nickname.chars().next().unwrap_or('?');
@@ -113,12 +115,12 @@ pub fn UserProfilePage() -> impl IntoView {
 
     view! {
         <Nav/>
-        <main class="max-w-4xl mx-auto px-4 py-8">
-            <Suspense fallback=move || view! { <div class="text-center py-16 text-gray-400">{move || t!(i18n, loading)}</div> }>
+        <main class={MAIN}>
+            <Suspense fallback=move || view! { <div class={format!("{} text-gray-400", EMPTY)}>{move || t!(i18n, loading)}</div> }>
                 {move || data.get().map(|result| match result {
                     Err(e) => view! { <p class="text-red-500 text-center">{e.to_string()}</p> }.into_any(),
                     Ok(None) => view! {
-                        <div class="text-center py-16">
+                        <div class={EMPTY}>
                             <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">User not found</h1>
                             <a href="/users" class="btn-primary">Back to users</a>
                         </div>
@@ -199,7 +201,7 @@ pub fn UserProfilePage() -> impl IntoView {
                                             view! {
                                                 <div class="mb-4">
                                                     <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_keys_tags)}</p>
-                                                    <div class="flex flex-wrap gap-2">
+                                                    <div class={FLEX_WRAP_GAP}>
                                                         {user.keywords.iter().map(|t| view! {
                                                             <span class=BADGE_BLUE>{t.name.clone()}</span>
                                                         }).collect::<Vec<_>>()}
@@ -211,7 +213,7 @@ pub fn UserProfilePage() -> impl IntoView {
                                             view! {
                                                 <div>
                                                     <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_keys_tags)}</p>
-                                                    <div class="flex flex-wrap gap-2">
+                                                    <div class={FLEX_WRAP_GAP}>
                                                         {user.topics.iter().map(|t| {
                                                             let url = format!("/footballs?filter=topic&fid={}", t.id);
                                                             view! {

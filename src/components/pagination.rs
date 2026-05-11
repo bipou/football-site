@@ -1,6 +1,6 @@
-use crate::i18n::use_i18n;
-use crate::i18n::{t, t_string};
+use crate::i18n::{t, use_i18n};
 use crate::models::PageInfo;
+use crate::utils::constant::{FLEX_BETWEEN, TEXT_SUBTLE};
 use leptos::prelude::*;
 
 /// Cursor-based (actually page-number-based) pagination bar.
@@ -19,9 +19,10 @@ pub fn Pagination(page_info: PageInfo, base_url: String) -> impl IntoView {
     let next_url = format!("{}?from={}", base, pi.current_page + 1);
 
     view! {
-        <nav class="flex items-center justify-between mt-8 px-4">
-            <div class="text-sm text-gray-500 dark:text-gray-400">
-                {format!("Page {} / {} — {} {}", pi.current_page, pi.total_pages, pi.total_count, t_string!(i18n, pagination_aggregate))}
+        <nav class={format!("{} mt-8 px-4", FLEX_BETWEEN)}>
+            <div class={format!("text-sm {}", TEXT_SUBTLE)}>
+                <span>"Page " {pi.current_page} " / " {pi.total_pages} " — " {pi.total_count} " "</span>
+                {move || t!(i18n, pagination_aggregate)}
             </div>
             <div class="flex gap-2">
                 {if pi.has_previous {

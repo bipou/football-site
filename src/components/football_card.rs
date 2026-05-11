@@ -1,7 +1,8 @@
-use crate::i18n::{t, use_i18n};
+use crate::i18n::{Locale, t, use_i18n};
 use crate::models::Football;
 use crate::utils::constant::{
-    BADGE_BLUE_NO_UL, BADGE_GRAY, BADGE_GREEN, BADGE_RED, ITALIC, ITALIC_XS,
+    BADGE_BLUE_NO_UL, BADGE_GRAY, BADGE_GREEN, BADGE_RED, FLEX_BETWEEN, HOVER_SHADOW, ITALIC,
+    ITALIC_XS, TEXT_MUTED, TEXT_SUBTLE, TEXT_XS_MUTED,
 };
 use leptos::prelude::*;
 
@@ -27,11 +28,14 @@ fn status_badge(status: i8) -> &'static str {
 }
 
 #[component]
-fn CatBadge(name: String) -> impl IntoView {
-    if name.is_empty() {
-        ().into_any()
-    } else {
-        view! { <span class=BADGE_GRAY>{name}</span> }.into_any()
+fn CatBadge(#[prop(into)] name: Signal<String>) -> impl IntoView {
+    move || {
+        let n = name.get();
+        if n.is_empty() {
+            ().into_any()
+        } else {
+            view! { <span class=BADGE_GRAY>{n}</span> }.into_any()
+        }
     }
 }
 
@@ -39,7 +43,7 @@ fn CatBadge(name: String) -> impl IntoView {
 fn OddsSection(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
     let i18n = use_i18n();
     if odds.is_empty() {
-        return view! { <p class=format!("text-xs text-gray-400 {} mb-2", ITALIC)>{move || t!(i18n, not_predicted)}</p> }.into_any();
+        return view! { <p class=format!("{} {} mb-2", TEXT_XS_MUTED, ITALIC)>{move || t!(i18n, not_predicted)}</p> }.into_any();
     }
     let init = odds.first().cloned();
     let last = odds.last().cloned();
@@ -78,7 +82,7 @@ fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
             {init.map(|c| view! {
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_init_pred)}</span>
-                    <span class="text-gray-600 dark:text-gray-300">
+                    <span class=TEXT_MUTED>
                         {move || t!(i18n, football_s)} ": " {c.s}
                         " | " {move || t!(i18n, football_wdl)} ": " {c.wdl}
                         " | " {move || t!(i18n, football_tg)} ": " {c.tg}
@@ -89,7 +93,7 @@ fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
             {last.and_then(|c| if preds.len() > 1 { Some(view! {
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_last_pred)}</span>
-                    <span class="text-gray-600 dark:text-gray-300">
+                    <span class=TEXT_MUTED>
                         {move || t!(i18n, football_s)} ": " {c.s}
                         " | " {move || t!(i18n, football_wdl)} ": " {c.wdl}
                         " | " {move || t!(i18n, football_tg)} ": " {c.tg}
@@ -123,26 +127,35 @@ fn OverSection(over: Option<crate::models::FootballOver>) -> impl IntoView {
 pub fn FootballCard(football: Football) -> impl IntoView {
     let i18n = use_i18n();
     let card_class = format!(
-        "card p-4 hover:shadow-md transition-shadow {}",
+        "card p-4 {} {}",
+        HOVER_SHADOW,
         status_class(football.status)
     );
-    let cat_name = football
-        .category
-        .as_ref()
-        .map(|c| c.name_en.clone())
-        .unwrap_or_default();
+    let cat_name = Memo::new(move |_| {
+        football
+            .category
+            .as_ref()
+            .map(|c| {
+                if i18n.get_locale() == Locale::zh {
+                    c.name_zh.clone()
+                } else {
+                    c.name_en.clone()
+                }
+            })
+            .unwrap_or_default()
+    });
     let topics = football.topics;
 
     view! {
         <div class=card_class>
-            <div class="flex items-center justify-between mb-2">
+            <div class=format!("{} mb-2", FLEX_BETWEEN)>
                 <a href=format!("/footballs/{}", football.id) class="font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 no-underline text-base leading-tight">
                     {football.home_team} " vs " {football.away_team}
                 </a>
                 <span class="text-sm text-gray-400 ml-2 whitespace-nowrap">{status_badge(football.status)}</span>
             </div>
 
-            <div class="text-sm text-gray-500 dark:text-gray-400 mb-3 space-x-2">
+            <div class=format!("text-sm {} mb-3 space-x-2", TEXT_SUBTLE)>
                 <span>{football.season}</span>
                 <CatBadge name=cat_name/>
                 <span class="text-blue-500">{football.kick_off_at_mdhm8}</span>
@@ -152,7 +165,7 @@ pub fn FootballCard(football: Football) -> impl IntoView {
             <PredSection preds=football.il_pred_over/>
             <OverSection over=football.football_over/>
 
-            <div class="flex items-center justify-between mt-3">
+            <div class=format!("{} mt-3", FLEX_BETWEEN)>
                 <div class="flex flex-wrap gap-1">
                     {topics.iter().map(|t| view! {
                         <a href=format!("/footballs?filter=topic&fid={}", t.id) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>

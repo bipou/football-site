@@ -27,7 +27,7 @@ extern "C" {
     fn toggle_theme();
 }
 
-use crate::utils::constant::{HOVER_NO_UNDERLINE, NO_UNDERLINE};
+use crate::utils::constant::{HOVER_NO_UNDERLINE, NO_UNDERLINE, BG_CARD, FLEX_BETWEEN, TEXT_MUTED};
 
 // ── Sub-components ────────────────────────────────────────────────────────
 
@@ -51,10 +51,10 @@ fn NavLinks() -> impl IntoView {
     let i18n = use_i18n();
     view! {
         <div class="hidden sm:flex items-center gap-5 text-base">
-            <A href="/footballs" attr:class=format!("text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
+            <A href="/footballs" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
                 {move || t!(i18n, nav_football)}
             </A>
-            <A href="/users" attr:class=format!("text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
+            <A href="/users" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
                 {move || t!(i18n, nav_user)}
             </A>
         </div>
@@ -101,7 +101,7 @@ fn LangDropdown() -> impl IntoView {
     view! {
         <div class="relative inline-block">
             <button
-                class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                class={format!("px-2 py-1 text-sm border border-gray-300 dark:border-gray-500 rounded text-gray-700 dark:text-gray-200 {} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors", BG_CARD)}
                 on:click=move |ev| {
                     ev.stop_propagation();
                     set_open.update(|v| *v = !*v);
@@ -112,7 +112,7 @@ fn LangDropdown() -> impl IntoView {
                 <span class="ml-1 opacity-50">"▾"</span>
             </button>
             <div
-                class=move || format!("bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50",
+                class=move || format!("{} border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50", BG_CARD,
                     if open.get() { "" } else { "hidden" })
             >
                 <button
@@ -173,10 +173,10 @@ fn AuthSection() -> impl IntoView {
             }.into_any()
         } else {
             view! {
-                <A href="/sign-in" attr:class=format!("text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
+                <A href="/sign-in" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
                     {move || t!(i18n, sign_in)}
                 </A>
-                <A href="/register" attr:class=format!("text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 {}", NO_UNDERLINE)>
+                <A href="/register" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
                     {move || t!(i18n, register)}
                 </A>
             }.into_any()
@@ -215,9 +215,9 @@ fn NavRight() -> impl IntoView {
 #[component]
 pub fn Nav() -> impl IntoView {
     view! {
-        <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
+        <nav class={format!("{} border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm", BG_CARD)}>
             <div class="max-w-6xl mx-auto px-4">
-                <div class="flex items-center justify-between h-12">
+                <div class={format!("{} h-12", FLEX_BETWEEN)}>
                     <NavLeft/>
                     <NavRight/>
                 </div>

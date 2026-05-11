@@ -230,3 +230,19 @@ article.prose-sm img{max-width:100%}
 .cursor-not-allowed{cursor:not-allowed;opacity:.5}
 .cursor-pointer{cursor:pointer}
 .leading-1{line-height:1}
+
+// ── Shared component classes ─────────────────────────────────────────────────
+// Category filter bar: base styles for all child links
+.cat-bar a {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+// Table row with bottom border
+.table-row {
+  border-bottom: 1px solid #e5e7eb;
+}
+@include dark {
+  .table-row { border-color: #374151; }
+}

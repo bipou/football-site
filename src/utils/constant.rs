@@ -8,9 +8,24 @@ pub const BADGE_GRAY: &str = "badge-gray";
 pub const BADGE_GRAY_NO_UL: &str = "badge-gray no-underline";
 pub const BADGE_GREEN: &str = "badge-green";
 pub const BADGE_RED: &str = "badge-red";
-pub const CAT_ITEM: &str = "px-2 py-1 text-sm no-underline";
 pub const ITALIC: &str = "italic";
 pub const ITALIC_XS: &str = "text-xs text-gray-400 italic";
+
+// ── Shared utility class combinations ────────────────────────────────────
+pub const TEXT_MUTED: &str = "text-gray-600 dark:text-gray-300";
+pub const TEXT_SUBTLE: &str = "text-gray-500 dark:text-gray-400";
+pub const TEXT_XS_MUTED: &str = "text-xs text-gray-400";
+pub const FLEX_BETWEEN: &str = "flex items-center justify-between";
+pub const BG_CARD: &str = "bg-white dark:bg-gray-800";
+pub const MAIN: &str = "max-w-4xl mx-auto px-4 py-8";
+pub const WIDE: &str = "max-w-6xl mx-auto px-4 py-8";
+pub const GRID_2: &str = "grid grid-cols-1 md:grid-cols-2 gap-4";
+pub const HOVER_SHADOW: &str = "hover:shadow-md transition-shadow";
+pub const EMPTY: &str = "text-center py-16";
+pub const CARD_SECTION: &str = "card p-6 mb-6";
+pub const H1: &str = "text-xl font-bold text-gray-800 dark:text-gray-100 mb-6";
+pub const SECTION_H2: &str = "text-base font-semibold text-gray-700 dark:text-gray-200 mb-4";
+pub const FLEX_WRAP_GAP: &str = "flex flex-wrap gap-2";
 
 // ── Config (SSR only) ──────────────────────────────────────────────────────
 #[cfg(feature = "ssr")]

@@ -8,7 +8,7 @@ use crate::components::{FootballCard, Footer, Nav};
 use crate::i18n::use_i18n;
 use crate::models::Football;
 
-use crate::utils::constant::HOVER_UNDERLINE;
+use crate::utils::constant::{HOVER_UNDERLINE, WIDE, TEXT_SUBTLE};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomeData {
@@ -98,9 +98,9 @@ pub fn HomePage() -> impl IntoView {
     view! {
         <Title text=move || site_title!(i18n)/>
         <Nav/>
-        <main class="max-w-6xl mx-auto px-4 py-8">
+        <main class={WIDE}>
             <div class="mb-10 text-center">
-                <p class="text-gray-500 dark:text-gray-400 text-sm max-w-2xl mx-auto">
+                <p class={format!("{} text-sm max-w-2xl mx-auto", TEXT_SUBTLE)}>
                     {move || t!(i18n, site_intro)}
                 </p>
                 <p class="text-xs text-red-400 dark:text-red-500 mt-3 max-w-2xl mx-auto">

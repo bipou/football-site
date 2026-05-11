@@ -1,13 +1,11 @@
-use crate::i18n::{t, t_string};
+use crate::i18n::{t, use_i18n};
 use crate::page_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
 use crate::components::{Footer, Nav};
-use crate::i18n::use_i18n;
-
-const HOVER_UNDERLINE: &str = "hover:underline";
+use crate::utils::constant::{GRID_2, H1, HOVER_UNDERLINE, TEXT_SUBTLE};
 
 // ── Sign In server function ───────────────────────────────────────────────────
 
@@ -137,7 +135,7 @@ pub fn SignInPage() -> impl IntoView {
         <Nav/>
         <main class="min-h-[80vh] flex items-center justify-center px-4">
             <div class="card p-8 w-full max-w-sm">
-                <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">
+                <h1 class=format!("{} text-center", H1)>
                     {move || t!(i18n, user_sign_in)}
                 </h1>
 
@@ -158,14 +156,14 @@ pub fn SignInPage() -> impl IntoView {
 
                     // Error
                     {move || action.value().get().and_then(|r| r.err()).map(|e| {
-                        let msg = if e.to_string().contains("sign_in_incorrect") {
-                            t_string!(i18n, sign_in_incorrect)
+                        let msg = move || if e.to_string().contains("sign_in_incorrect") {
+                            t!(i18n, sign_in_incorrect).into_any()
                         } else if e.to_string().contains("sign_in_not_activation") {
-                            t_string!(i18n, sign_in_not_activation)
+                            t!(i18n, sign_in_not_activation).into_any()
                         } else if e.to_string().contains("sign_in_banned") {
-                            t_string!(i18n, sign_in_banned)
+                            t!(i18n, sign_in_banned).into_any()
                         } else {
-                            t_string!(i18n, sign_in_security_problem)
+                            t!(i18n, sign_in_security_problem).into_any()
                         };
                         view! { <p class="text-red-500 text-sm text-center">{msg}</p> }
                     })}
@@ -208,7 +206,7 @@ pub fn SignOutPage() -> impl IntoView {
 
     view! {
         <div class="min-h-screen flex items-center justify-center">
-            <p class="text-gray-500 dark:text-gray-400 text-lg">"Signing out..."</p>
+            <p class=format!("{} text-lg", TEXT_SUBTLE)>"Signing out..."</p>
         </div>
     }
 }
@@ -232,7 +230,7 @@ pub fn RegisterPage() -> impl IntoView {
         <Nav/>
         <main class="max-w-2xl mx-auto px-4 py-8">
             <div class="card p-8">
-                <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+                <h1 class=H1>
                     {move || t!(i18n, user_register)}
                 </h1>
 
@@ -254,7 +252,7 @@ pub fn RegisterPage() -> impl IntoView {
                         <input type="hidden" name="phone_public" value="false"/>
                         <input type="hidden" name="im_public" value="false"/>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class=GRID_2>
                             <div>
                                 <label class="form-label">{move || t!(i18n, register_username)} " *"</label>
                                 <input type="text" name="username" required
@@ -357,7 +355,7 @@ pub fn UserActivatePage() -> impl IntoView {
         <Nav/>
         <main class="min-h-[80vh] flex items-center justify-center px-4">
             <div class="card p-8 w-full max-w-md text-center">
-                <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+                <h1 class=H1>
                     {move || t!(i18n, user_activate)}
                 </h1>
                 <Suspense fallback=|| view! { <p class="text-gray-400">"Activating..."</p> }>

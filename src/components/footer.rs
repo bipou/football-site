@@ -1,12 +1,13 @@
 use crate::i18n::t;
 use crate::i18n::use_i18n;
+use crate::utils::constant::{BG_CARD, TEXT_SUBTLE, WIDE};
 use leptos::prelude::*;
 
 #[component]
 pub fn Footer() -> impl IntoView {
     let i18n = use_i18n();
     view! {
-        <footer class="mt-16 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <footer class={format!("mt-16 border-t border-gray-200 dark:border-gray-700 {}", BG_CARD)}>
             <ins
                 class="adsbygoogle"
                 style="display: block"
@@ -18,7 +19,7 @@ pub fn Footer() -> impl IntoView {
             <script>
                 (adsbygoogle = window.adsbygoogle || []).push({});
             </script>
-            <div class="max-w-6xl mx-auto px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400 space-y-2">
+            <div class={format!("{} text-center text-sm {} space-y-2", WIDE, TEXT_SUBTLE)}>
                 <p class="text-xs text-red-500">
                     {move || t!(i18n, site_warn)}
                 </p>

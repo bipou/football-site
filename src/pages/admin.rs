@@ -1,4 +1,4 @@
-use crate::i18n::{t, t_string};
+use crate::i18n::{t, use_i18n};
 use crate::page_title;
 use leptos::prelude::*;
 use leptos_meta::Title;
@@ -6,10 +6,11 @@ use leptos_router::hooks::{use_params_map, use_query_map};
 
 use crate::app::use_auth;
 use crate::components::{Footer, Nav, Pagination};
-use crate::i18n::use_i18n;
 use crate::models::FootballsResult;
 
-use crate::utils::constant::{HOVER_UNDERLINE, NO_UNDERLINE};
+use crate::utils::constant::{
+    EMPTY, GRID_2, H1, HOVER_SHADOW, HOVER_UNDERLINE, MAIN, NO_UNDERLINE,
+};
 
 // ── Server functions ──────────────────────────────────────────────────────────
 
@@ -39,25 +40,25 @@ pub fn AdminPage() -> impl IntoView {
     view! {
         <Title text=move || page_title!(i18n, admin_dashboard)/>
         <Nav/>
-        <main class="max-w-4xl mx-auto px-4 py-8">
+        <main class=MAIN>
             {if auth.is_none() {
                 view! {
-                    <div class="text-center py-16">
+                    <div class=EMPTY>
                         <p class="text-gray-500 mb-4">"Please sign in to access the admin area."</p>
                         <a href="/sign-in" class="btn-primary">"Sign In"</a>
                     </div>
                 }.into_any()
             } else {
                 view! {
-                    <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+                    <h1 class=H1>
                         {move || t!(i18n, admin_dashboard)}
                     </h1>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <a href="/admin/footballs" class=format!("card p-6 block {} hover:shadow-md transition-shadow", NO_UNDERLINE)>
+                    <div class=GRID_2>
+                        <a href="/admin/footballs" class=format!("card p-6 block {} {}", NO_UNDERLINE, HOVER_SHADOW)>
                             <h2 class="text-lg font-semibold text-blue-600 mb-2">"⚽ " {move || t!(i18n, admin_footballs)}</h2>
                             <p class="text-sm text-gray-500">"Manage football match status and visibility."</p>
                         </a>
-                        <a href="/users" class=format!("card p-6 block {} hover:shadow-md transition-shadow", NO_UNDERLINE)>
+                        <a href="/users" class=format!("card p-6 block {} {}", NO_UNDERLINE, HOVER_SHADOW)>
                             <h2 class="text-lg font-semibold text-blue-600 mb-2">"👥 Users"</h2>
                             <p class="text-sm text-gray-500">"View and manage registered users."</p>
                         </a>
@@ -96,13 +97,13 @@ pub fn AdminFootballsPage() -> impl IntoView {
         <main class="max-w-5xl mx-auto px-4 py-8">
             {if auth.is_none() {
                 view! {
-                    <div class="text-center py-16">
+                    <div class=EMPTY>
                         <a href="/sign-in" class="btn-primary">"Sign In Required"</a>
                     </div>
                 }.into_any()
             } else {
                 view! {
-                    <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+                    <h1 class=H1>
                         {move || t!(i18n, admin_footballs)}
                     </h1>
 
@@ -152,19 +153,18 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                                             (0, "status_hide", "bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"),
                                                         ].into_iter().map(|(s, key, cls)| {
                                                             let fid3 = fid2.clone();
-                                                            let label: String = match key {
-                                                                "status_publish" => t_string!(i18n, status_publish).to_owned(),
-                                                                "status_hot" => t_string!(i18n, status_hot).to_owned(),
-                                                                "status_picks" => t_string!(i18n, status_picks).to_owned(),
-                                                                "status_hide" => t_string!(i18n, status_hide).to_owned(),
-                                                                _ => "Both".to_string(),
-                                                            };
                                                             view! {
                                                                 <ActionForm action=update_action>
                                                                     <input type="hidden" name="football_id" value=fid3.clone()/>
                                                                     <input type="hidden" name="status" value=s.to_string()/>
                                                                     <button type="submit" class=format!("text-xs px-2 py-1 rounded transition-colors {cls}")>
-                                                                        {label}
+                                                                        {move || match key {
+                                                                            "status_publish" => t!(i18n, status_publish).into_any(),
+                                                                            "status_hot" => t!(i18n, status_hot).into_any(),
+                                                                            "status_picks" => t!(i18n, status_picks).into_any(),
+                                                                            "status_hide" => t!(i18n, status_hide).into_any(),
+                                                                            _ => "Both".into_any(),
+                                                                        }}
                                                                     </button>
                                                                 </ActionForm>
                                                             }
@@ -198,15 +198,15 @@ pub fn AdminFootballDetailPage() -> impl IntoView {
     view! {
         <Title text="BiPou"/>
         <Nav/>
-        <main class="max-w-4xl mx-auto px-4 py-8">
+        <main class=MAIN>
             {if auth.is_none() {
                 view! {
-                    <div class="text-center py-16">
+                    <div class=EMPTY>
                         <a href="/sign-in" class="btn-primary">"Sign In Required"</a>
-                                            </div>
-                                        }.into_any()
-                                    } else {
-                                        let detail_url = move || format!("/footballs/{}", id());
+                    </div>
+                }.into_any()
+            } else {
+                let detail_url = move || format!("/footballs/{}", id());
                 view! {
                     <div class="flex items-center gap-4 mb-6">
                         <a href="/admin/footballs" class="text-sm text-gray-500 hover:text-blue-600">
