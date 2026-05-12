@@ -1,8 +1,8 @@
 {
   "site_name": "BiPou",
   "site_slogan": "Football Data Lab",
-  "site_intro": "BiPou, Football Data Calculation: exhaustive analysis is NO BETTER than a wild guess?",
-  "site_warn": "For entertainment purposes only. May not be accurate. Do not use for betting or gambling!",
+  "site_intro": "BiPou, Football Data Calculation: exhaustive analysis is NO BETTER than a wild guess? \nRust full-stack isomorphic application, built with Leptos, SurrealDB, and Axum.",
+  "site_warn": "For entertainment only. Not a reference.",
 
   "lang_current": "English",
   "lang_zh": "中文",

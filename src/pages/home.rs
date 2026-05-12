@@ -102,7 +102,9 @@ pub fn HomePage() -> impl IntoView {
         <main class={WIDE}>
             <div class="mb-10 text-center">
                 <p class={format!("{} text-sm max-w-2xl mx-auto", TEXT_SUBTLE)}>
-                    {move || t!(i18n, site_intro)}
+                    <a style="white-space: pre-line" href="https://github.com/bipou/football-site" target="_blank" rel="noopener noreferrer">
+                        {move || t!(i18n, site_intro)}
+                    </a>
                 </p>
                 <p class="text-xs text-red-400 dark:text-red-500 mt-3 max-w-2xl mx-auto">
                     {move || t!(i18n, site_warn)}

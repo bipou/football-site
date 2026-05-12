@@ -1,8 +1,8 @@
 {
   "site_name": "毕剖",
   "site_slogan": "足球数据实验室",
-  "site_intro": "毕剖，足球数据计算：毕力殚剖，不如一蒙？",
-  "site_warn": "纯属娱乐，不尽然准确，勿用于博彩或赌博！",
+  "site_intro": "毕剖，足球数据计算：毕力殚剖，不如一蒙？\nRust 全栈同构，基于 Leptos、SurrealDB、Axum 构建。",
+  "site_warn": "纯属娱乐，勿做参考。",
 
   "lang_current": "中文",
   "lang_zh": "中文",
