@@ -9,7 +9,7 @@ use crate::components::{FootballCard, Footer, Nav};
 use crate::i18n::use_i18n;
 use crate::models::Football;
 
-use crate::utils::constant::{HOVER_UNDERLINE, TEXT_SUBTLE, WIDE};
+use crate::utils::constant::{GRID_3, HOVER_UNDERLINE, TEXT_SUBTLE, WIDE};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HomeData {
@@ -44,7 +44,7 @@ fn TodaySection(footballs: Vec<Football>) -> impl IntoView {
                 })
             } else {
                 Either::Right(view! {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class={GRID_3}>
                         {footballs.into_iter().map(|f| view! {
                             <FootballCard football=f/>
                         }).collect::<Vec<_>>()}
@@ -75,7 +75,7 @@ fn YesterdaySection(footballs: Vec<Football>) -> impl IntoView {
                 })
             } else {
                 Either::Right(view! {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class={GRID_3}>
                         {footballs.into_iter().map(|f| view! {
                             <FootballCard football=f/>
                         }).collect::<Vec<_>>()}

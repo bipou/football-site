@@ -9,7 +9,7 @@ use crate::components::{FootballCard, Footer, Nav, Pagination};
 use crate::models::{Category, FootballsResult};
 
 use crate::page_title;
-use crate::utils::constant::{EMPTY, GRID_2, WIDE};
+use crate::utils::constant::{EMPTY, GRID_3, WIDE};
 
 // ── Server functions ──────────────────────────────────────────────────────────
 
@@ -157,7 +157,7 @@ pub fn FootballsPage() -> impl IntoView {
                                 }))
                             } else {
                                 Either3::Right(Either::Right(view! {
-                                    <div class=GRID_2>
+                                    <div class={GRID_3}>
                                         {data.items.into_iter().map(|f| view! {
                                             <FootballCard football=f/>
                                         }).collect::<Vec<_>>()}

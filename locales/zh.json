@@ -1,7 +1,7 @@
 {
   "site_name": "毕剖",
-  "site_slogan": "足球预测实验室",
-  "site_intro": "毕剖，足球预测实验室：毕力殚剖，不如一蒙？",
+  "site_slogan": "足球数据实验室",
+  "site_intro": "毕剖，足球数据计算：毕力殚剖，不如一蒙？",
   "site_warn": "纯属娱乐，不尽然准确，勿用于博彩或赌博！",
 
   "lang_current": "中文",
@@ -9,8 +9,8 @@
   "lang_en": "English",
 
   "nav_football": "足球预测",
-  "nav_user": "玩家",
-  "slip": "幸运红单",
+  "nav_user": "球迷",
+  "slip": "好运红单",
   "odds": "赔率",
   "pred": "预测",
   "more": "更多 ...",
@@ -85,6 +85,7 @@
   "register_exist": "用户名或邮箱已存在",
   "register_success": "注册成功！请查阅邮件激活账户。",
 
+  "users_list": "球迷列表",
   "registration_time": "注册时间：",
   "features_keys_tags": "特点关键词/标签：",
   "related_keys_tags": "涉猎关键词/标签：",
@@ -94,7 +95,6 @@
   "user_im": "交流工具：",
   "user_view_contact": "签入后可查看联系信息",
   "user_risk_tip": "本网站仅提供用户信息聚合，不负任何法律责任。",
-  "users_list": "玩家列表",
 
   "user_activate": "账户激活",
   "user_activated": "毕剖账号激活成功！",

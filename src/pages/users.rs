@@ -2,7 +2,7 @@ use crate::i18n::t;
 use crate::page_title;
 use crate::site_title;
 use crate::utils::constant::{
-    BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_2, H1, MAIN,
+    BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_3, H1, MAIN,
 };
 use leptos::either::Either;
 use leptos::prelude::*;
@@ -69,7 +69,7 @@ pub fn UsersPage() -> impl IntoView {
                     Ok(d) => {
                         let pi = d.page_info.clone();
                         Either::Right(view! {
-                            <div class={format!("{} mb-8", GRID_2)}>
+                            <div class={format!("{} mb-8", GRID_3)}>
                                 {d.items.into_iter().map(|u| {
                                     let url = format!("/users/{}", u.username);
                                     let initial = u.nickname.chars().next().unwrap_or('?');
