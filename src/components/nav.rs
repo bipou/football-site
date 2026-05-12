@@ -40,7 +40,7 @@ fn Logo() -> impl IntoView {
             <A href="/" attr:class=format!("font-bold text-blue-600 dark:text-blue-400 text-2xl site-title {} {}", NO_UNDERLINE, HOVER_NO_UNDERLINE)>
                 {move || t!(i18n, site_name)}
             </A>
-            <a href="/doc" class="hidden sm:inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 h-6 px-2 ml-2 no-underline" target="_blank" rel="noopener noreferrer">
+            <a href="/doc" class="inline-flex items-center justify-center text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 h-6 px-2 ml-2 no-underline" target="_blank" rel="noopener noreferrer">
                 {move || t!(i18n, site_slogan)}
             </a>
         </span>
@@ -51,14 +51,12 @@ fn Logo() -> impl IntoView {
 fn NavLinks() -> impl IntoView {
     let i18n = use_i18n();
     view! {
-        <div class="hidden sm:flex items-center gap-5 text-base">
-            <A href="/footballs" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
-                {move || t!(i18n, nav_football)}
-            </A>
-            <A href="/users" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
-                {move || t!(i18n, nav_user)}
-            </A>
-        </div>
+        <A href="/footballs" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+            {move || t!(i18n, nav_football)}
+        </A>
+        <A href="/users" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+            {move || t!(i18n, nav_user)}
+        </A>
     }
 }
 
@@ -66,12 +64,14 @@ fn NavLinks() -> impl IntoView {
 fn NavLeft() -> impl IntoView {
     view! {
         <Logo/>
-        <NavLinks/>
+        <div class="hidden sm:flex items-center gap-5 text-base">
+            <NavLinks/>
+        </div>
     }
 }
 
 #[component]
-fn LuckySlip() -> impl IntoView {
+fn Random() -> impl IntoView {
     let i18n = use_i18n();
     let random_action =
         Action::new(|_: &()| async move { crate::pages::footballs::get_random_id().await });
@@ -109,8 +109,8 @@ fn LangDropdown() -> impl IntoView {
                 }
             >
                 "🌐 "
-                {move || t!(i18n, lang_current)}
-                <span class="ml-1 opacity-50">"▾"</span>
+                <span class="hidden sm:inline">{move || t!(i18n, lang_current)}</span>
+                <span class="hidden sm:inline ml-1 opacity-50">"▾"</span>
             </button>
             <div
                 class=move || format!("{} border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50", BG_CARD,
@@ -129,100 +129,4 @@ fn LangDropdown() -> impl IntoView {
                     on:click=move |_| { i18n.set_locale(Locale::en); set_open.set(false); }
                     class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
                         if i18n.get_locale() != Locale::zh { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
-                        else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
-                        NO_UNDERLINE)
-                >
-                    {move || t!(i18n, lang_en)}
-                </button>
-            </div>
-        </div>
-    }
-}
-
-#[component]
-fn ThemeToggle() -> impl IntoView {
-    let on_click = move |_| {
-        #[cfg(feature = "hydrate")]
-        {
-            toggle_theme();
-        }
-    };
-    view! {
-        <button
-            title="Toggle theme"
-            on:click=on_click
-            class="w-7 h-7 flex items-center justify-center rounded-full border-0 bg-transparent cursor-pointer text-base leading-1"
-        >
-            "🌓"
-        </button>
-    }
-}
-
-#[component]
-fn AuthSection() -> impl IntoView {
-    let i18n = use_i18n();
-    let auth = use_auth();
-    move || {
-        if let Some(user) = auth.clone() {
-            Either::Left(view! {
-                <span class="text-gray-700 dark:text-gray-200 font-medium hidden sm:inline text-base">
-                    {user.username.clone()}
-                </span>
-                <A href="/sign-out" attr:class=format!("text-sm text-gray-500 hover:text-red-500 {}", NO_UNDERLINE)>
-                    {move || t!(i18n, sign_out)}
-                </A>
-            })
-        } else {
-            Either::Right(view! {
-                <A href="/sign-in" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
-                    {move || t!(i18n, sign_in)}
-                </A>
-                <A href="/register" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
-                    {move || t!(i18n, register)}
-                </A>
-            })
-        }
-    }
-}
-
-#[component]
-fn NavTools() -> impl IntoView {
-    view! {
-        <LuckySlip/>
-        <LangDropdown/>
-    }
-}
-
-#[component]
-fn NavActions() -> impl IntoView {
-    view! {
-        <ThemeToggle/>
-        <AuthSection/>
-    }
-}
-
-#[component]
-fn NavRight() -> impl IntoView {
-    view! {
-        <div class="flex items-center gap-3 text-sm">
-            <NavTools/>
-            <NavActions/>
-        </div>
-    }
-}
-
-// ── Main Nav ──────────────────────────────────────────────────────────────
-
-#[component]
-pub fn Nav() -> impl IntoView {
-    view! {
-        <nav class={format!("{} border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm", BG_CARD)}>
-            <div class="max-w-6xl mx-auto px-4">
-                <div class={format!("{} h-12", FLEX_BETWEEN)}>
-                    <NavLeft/>
-                    <NavRight/>
-                </div>
-            </div>
-        </nav>
-    }
-}
+                        else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-

@@ -144,6 +144,7 @@ input,button,textarea,select{font:inherit}
 
 // ── Positioning ────────────────────────────────────────────────────────────────
 .sticky{position:sticky}.top-0{top:0}.top-full{top:100%}.z-50{z-index:50}
+.fixed{position:fixed}.inset-0{top:0;right:0;bottom:0;left:0}.right-0{right:0}
 .align-text-top{vertical-align:text-top}
 .relative{position:relative}.absolute{position:absolute}
 .left-1\/2{left:50%}.-translate-x-1\/2{transform:translateX(-50%)}
@@ -217,6 +218,7 @@ article.prose-sm img{max-width:100%}
 // ── Responsive ─────────────────────────────────────────────────────────────────
 @media(min-width:640px){
   .sm\:flex{display:flex}.sm\:inline{display:inline}.sm\:inline-flex{display:inline-flex}
+  .sm\:hidden{display:none}
 }
 @media(min-width:768px){
   .md\:grid-cols-2{grid-template-columns:repeat(2,1fr)}
@@ -247,3 +249,14 @@ article.prose-sm img{max-width:100%}
 @include dark {
   .table-row { border-color: #374151; }
 }
+
+// ── Hamburger menu ────────────────────────────────────────────────────────
+.hm-menu a, .hm-menu a:hover { text-decoration: none; }
+.hm-menu .hm-signout { color: #6b7280; }
+.hm-menu .hm-signout:hover { color: #ef4444; }
+@include dark {
+  .hm-menu .hm-signout { color: #9ca3af; }
+  .hm-menu .hm-signout:hover { color: #f87171; }
+}
+.hm-menu hr { border: none; border-top: 1px dashed #d1d5db; }
+@include dark { .hm-menu hr { border-top-color: #4b5563; } }
