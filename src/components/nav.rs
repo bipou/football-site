@@ -129,4 +129,161 @@ fn LangDropdown() -> impl IntoView {
                     on:click=move |_| { i18n.set_locale(Locale::en); set_open.set(false); }
                     class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
                         if i18n.get_locale() != Locale::zh { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
-                        else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-
+                        else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
+                        NO_UNDERLINE)
+                >
+                    {move || t!(i18n, lang_en)}
+                </button>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn ThemeToggle() -> impl IntoView {
+    let on_click = move |_| {
+        #[cfg(feature = "hydrate")]
+        {
+            toggle_theme();
+        }
+    };
+    view! {
+        <button
+            title="Toggle theme"
+            on:click=on_click
+            class="w-7 h-7 flex items-center justify-center rounded-full border-0 bg-transparent cursor-pointer text-base leading-1"
+        >
+            "🌓"
+        </button>
+    }
+}
+
+#[component]
+fn AuthSection() -> impl IntoView {
+    let i18n = use_i18n();
+    let auth = use_auth();
+    move || {
+        if let Some(user) = auth.clone() {
+            Either::Left(view! {
+                <span class="text-gray-700 dark:text-gray-200 font-medium hidden sm:inline text-base">
+                    {user.username.clone()}
+                </span>
+                <A href="/sign-out" attr:class=format!("text-sm text-gray-500 hover:text-red-500 {}", NO_UNDERLINE)>
+                    {move || t!(i18n, sign_out)}
+                </A>
+            })
+        } else {
+            Either::Right(view! {
+                <A href="/sign-in" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+                    {move || t!(i18n, sign_in)}
+                </A>
+                <A href="/register" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+                    {move || t!(i18n, register)}
+                </A>
+            })
+        }
+    }
+}
+
+// ── Hamburger menu (small screens) ────────────────────────────────────────
+
+#[component]
+fn HamburgerMenu() -> impl IntoView {
+    let (open, set_open) = signal(false);
+    let i18n = use_i18n();
+    let auth = use_auth();
+    let close = move |_| set_open.set(false);
+
+    view! {
+        <div class="sm:hidden">
+            <button
+                on:click=move |ev| {
+                    ev.stop_propagation();
+                    set_open.update(|v| *v = !*v);
+                }
+                class="w-8 h-8 flex items-center justify-center border border-gray-300 dark:border-gray-500 rounded text-gray-700 dark:text-gray-200 bg-transparent cursor-pointer text-lg shrink-0"
+            >
+                {move || if open.get() { "✕" } else { "☰" }}
+            </button>
+
+            {move || if open.get() {
+                Some(view! { <div class="fixed inset-0 z-40" on:click=move |_| set_open.set(false)></div> })
+            } else {
+                None
+            }}
+
+            <div
+                class=move || format!(
+                    "hm-menu {} border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg absolute top-full mt-2 z-50 whitespace-nowrap {}",
+                    BG_CARD,
+                    if open.get() { "" } else { "hidden" }
+                )
+                style="right:1rem"
+            >
+                <div class="px-4 py-3 flex flex-col gap-2">
+                    <A href="/footballs" on:click=close attr:class=format!("{} hover:text-blue-600", TEXT_MUTED)>
+                        {move || t!(i18n, nav_football)}
+                    </A>
+                    <A href="/users" on:click=close attr:class=format!("{} hover:text-blue-600", TEXT_MUTED)>
+                        {move || t!(i18n, nav_user)}
+                    </A>
+                    <Random/>
+                </div>
+                <hr/>
+                <div class="px-4 py-3 flex flex-col gap-2">
+                    {move || {
+                        if auth.is_some() {
+                            Either::Left(view! {
+                                <A href="/sign-out" on:click=close attr:class="hm-signout text-sm hover:text-red-500">
+                                    {move || t!(i18n, sign_out)}
+                                </A>
+                            })
+                        } else {
+                            Either::Right(view! {
+                                <A href="/sign-in" on:click=close attr:class=format!("text-sm {} hover:text-blue-600", TEXT_MUTED)>
+                                    {move || t!(i18n, sign_in)}
+                                </A>
+                                <A href="/register" on:click=close attr:class=format!("text-sm {} hover:text-blue-600", TEXT_MUTED)>
+                                    {move || t!(i18n, register)}
+                                </A>
+                            })
+                        }
+                    }}
+                </div>
+            </div>
+        </div>
+    }
+}
+
+// ── Right side of the nav bar ─────────────────────────────────────────────
+
+#[component]
+fn NavRight() -> impl IntoView {
+    view! {
+        <div class="flex items-center gap-3 text-sm">
+            <LangDropdown/>
+            <div class="hidden sm:flex items-center gap-3">
+                <Random/>
+                <AuthSection/>
+            </div>
+            <ThemeToggle/>
+            <HamburgerMenu/>
+        </div>
+    }
+}
+
+// ── Main Nav ──────────────────────────────────────────────────────────────
+
+#[component]
+pub fn Nav() -> impl IntoView {
+    view! {
+        <nav class={format!("{} border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm", BG_CARD)}>
+            <div class="max-w-6xl mx-auto px-4">
+                <div class={format!("{} h-12", FLEX_BETWEEN)}>
+                    <NavLeft/>
+                    <NavRight/>
+                </div>
+            </div>
+        </nav>
+    }
+}
