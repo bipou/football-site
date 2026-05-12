@@ -12,7 +12,7 @@ pub struct FootballLine {
     pub created_at: String,
 }
 
-/// Predicted or official match result.
+/// Calculated or official match result.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct FootballOver {
     pub id: String,
@@ -45,7 +45,7 @@ pub struct Football {
     /// Up to 2 entries: [initial kind=0, latest kind=0]
     pub il_odds: Vec<FootballLine>,
     /// Up to 2 entries: [initial kind=0, latest kind=0]
-    pub il_pred_over: Vec<FootballOver>,
+    pub il_calc_over: Vec<FootballOver>,
     /// Official final result (kind=1, latest)
     pub football_over: Option<FootballOver>,
     pub category: Option<Category>,

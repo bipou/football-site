@@ -76,7 +76,7 @@ fn OddsTable(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
         return Either::Left(view! {
             <div class=CARD_SECTION>
                 <p class=format!("text-gray-400 text-sm {}", ITALIC)>
-                    {move || t!(i18n, not_predicted)}
+                    {move || t!(i18n, not_calc)}
                 </p>
             </div>
         });
@@ -124,13 +124,13 @@ fn OddsTable(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
 }
 
 #[component]
-fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
+fn CalcsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     if calcs.is_empty() {
         return Either::Left(view! {
             <div class=CARD_SECTION>
                 <p class=format!("text-gray-400 text-sm {}", ITALIC)>
-                    {move || t!(i18n, not_predicted)}
+                    {move || t!(i18n, not_calc)}
                 </p>
             </div>
         });
@@ -139,7 +139,7 @@ fn PredictionsTable(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
     let last = calcs.last().cloned();
     Either::Right(view! {
         <div class=CARD_SECTION>
-            <h2 class=SECTION_H2>"Predictions"</h2>
+            <h2 class=SECTION_H2>{move || t!(i18n, calc)}</h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-gray-50 dark:bg-gray-700 text-xs text-gray-500">
@@ -188,7 +188,7 @@ fn OverDetail(football_over: Option<crate::models::FootballOver>) -> impl IntoVi
             <h2 class=SECTION_H2>{move || t!(i18n, football_over)}</h2>
             {match football_over {
                 None => Either::Left(view! {
-                    <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_full_time)}</p>
+                    <p class=format!("text-gray-400 text-sm {}", ITALIC)>{move || t!(i18n, not_full)}</p>
                 }),
                 Some(ov) => Either::Right(view! {
                     <div class="flex gap-6 flex-wrap text-sm">
@@ -229,13 +229,13 @@ fn FootballDetail(f: Football) -> impl IntoView {
     let i18n = use_i18n();
     let header_f = f.clone();
     let odds = f.il_odds.clone();
-    let calcs = f.il_pred_over.clone();
+    let calcs = f.il_calc_over.clone();
     let topics = f.topics;
     let football_over = f.football_over;
     view! {
         <MatchHeader f=header_f/>
         <OddsTable odds=odds/>
-        <PredictionsTable calcs=calcs/>
+        <CalcsTable calcs=calcs/>
         <OverDetail football_over=football_over/>
         <DetailTopicsSection topics=topics/>
         <p class="text-xs text-red-400 text-center mt-4">{move || t!(i18n, site_warn)}</p>

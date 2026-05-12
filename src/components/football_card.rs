@@ -46,7 +46,7 @@ fn OddsSection(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
     if odds.is_empty() {
         return Either::Left(view! {
             <p class=format!("{} {} mb-2", TEXT_XS_MUTED, ITALIC)>
-                {move || t!(i18n, not_predicted)}
+                {move || t!(i18n, not_calc)}
             </p>
         });
     }
@@ -75,18 +75,18 @@ fn OddsSection(odds: Vec<crate::models::FootballLine>) -> impl IntoView {
 }
 
 #[component]
-fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
+fn CalcsSection(calcs: Vec<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
-    if preds.is_empty() {
+    if calcs.is_empty() {
         return Either::Left(());
     }
-    let init = preds.first().cloned();
-    let last = preds.last().cloned();
+    let init = calcs.first().cloned();
+    let last = calcs.last().cloned();
     Either::Right(view! {
         <div class="text-xs space-y-1 mb-2 border-t border-gray-100 dark:border-gray-700 pt-2">
             {init.map(|c| view! {
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_init_pred)}</span>
+                    <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_init_calc)}</span>
                     <span class=TEXT_MUTED>
                         {move || t!(i18n, football_s)} ": " {c.s}
                         " | " {move || t!(i18n, football_wdl)} ": " {c.wdl}
@@ -95,9 +95,9 @@ fn PredSection(preds: Vec<crate::models::FootballOver>) -> impl IntoView {
                     </span>
                 </div>
             })}
-            {last.and_then(|c| if preds.len() > 1 { Some(view! {
+            {last.and_then(|c| if calcs.len() > 1 { Some(view! {
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_last_pred)}</span>
+                    <span class="text-gray-400 w-20 shrink-0">{move || t!(i18n, football_last_calc)}</span>
                     <span class=TEXT_MUTED>
                         {move || t!(i18n, football_s)} ": " {c.s}
                         " | " {move || t!(i18n, football_wdl)} ": " {c.wdl}
@@ -115,7 +115,7 @@ fn OverSection(over: Option<crate::models::FootballOver>) -> impl IntoView {
     let i18n = use_i18n();
     match over {
         None => Either::Left(view! {
-            <p class=ITALIC_XS>{move || t!(i18n, not_full_time)}</p>
+            <p class=ITALIC_XS>{move || t!(i18n, not_full)}</p>
         }),
         Some(ov) => Either::Right(view! {
             <div class="text-xs flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 pt-2">
@@ -169,7 +169,7 @@ pub fn FootballCard(football: Football) -> impl IntoView {
             </div>
 
             <OddsSection odds=football.il_odds/>
-            <PredSection preds=football.il_pred_over/>
+            <CalcsSection calcs=football.il_calc_over/>
             <OverSection over=football.football_over/>
 
             <div class=format!("{} mt-3", FLEX_BETWEEN)>
