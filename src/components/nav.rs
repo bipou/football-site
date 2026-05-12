@@ -90,7 +90,7 @@ fn LuckySlip() -> impl IntoView {
             }
             class=format!("text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors {}", NO_UNDERLINE)
         >
-            {move || t!(i18n, slip)}
+            {move || t!(i18n, rand)}
         </a>
     }
 }
