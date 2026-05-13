@@ -4,7 +4,7 @@ use leptos::prelude::*;
 use leptos_router::components::A;
 
 use crate::app::use_auth;
-use crate::i18n::{Locale, use_i18n};
+use crate::i18n::{Locale, td_string, use_i18n};
 
 #[cfg(feature = "hydrate")]
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -28,7 +28,10 @@ extern "C" {
     fn toggle_theme();
 }
 
-use crate::utils::constant::{BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NO_UNDERLINE, TEXT_MUTED};
+use crate::utils::constant::{
+    BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NAV_LINK, NAV_LINK_SM, NO_UNDERLINE,
+};
+use leptos_i18n::Locale as LocaleTrait;
 
 // ── Sub-components ────────────────────────────────────────────────────────
 
@@ -51,10 +54,10 @@ fn Logo() -> impl IntoView {
 fn NavLinks() -> impl IntoView {
     let i18n = use_i18n();
     view! {
-        <A href="/footballs" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+        <A href="/footballs" attr:class=NAV_LINK>
             {move || t!(i18n, nav_football)}
         </A>
-        <A href="/users" attr:class=format!("{} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+        <A href="/users" attr:class=NAV_LINK>
             {move || t!(i18n, nav_user)}
         </A>
     }
@@ -116,24 +119,20 @@ fn LangDropdown() -> impl IntoView {
                 class=move || format!("{} border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50", BG_CARD,
                     if open.get() { "" } else { "hidden" })
             >
-                <button
-                    on:click=move |_| { i18n.set_locale(Locale::zh); set_open.set(false); }
-                    class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
-                        if i18n.get_locale() == Locale::zh { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
-                        else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
-                        NO_UNDERLINE)
-                >
-                    {move || t!(i18n, lang_zh)}
-                </button>
-                <button
-                    on:click=move |_| { i18n.set_locale(Locale::en); set_open.set(false); }
-                    class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
-                        if i18n.get_locale() != Locale::zh { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
-                        else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
-                        NO_UNDERLINE)
-                >
-                    {move || t!(i18n, lang_en)}
-                </button>
+                {Locale::get_all().iter().map(|&locale| {
+                    let is_current = i18n.get_locale() == locale;
+                    view! {
+                        <button
+                            on:click=move |_| { i18n.set_locale(locale); set_open.set(false); }
+                            class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
+                                if is_current { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
+                                else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
+                                NO_UNDERLINE)
+                        >
+                            {td_string!(locale, lang_current)}
+                        </button>
+                    }
+                }).collect::<Vec<_>>()}
             </div>
         </div>
     }
@@ -174,10 +173,10 @@ fn AuthSection() -> impl IntoView {
             })
         } else {
             Either::Right(view! {
-                <A href="/sign-in" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+                <A href="/sign-in" attr:class=NAV_LINK_SM>
                     {move || t!(i18n, sign_in)}
                 </A>
-                <A href="/register" attr:class=format!("text-sm {} hover:text-blue-600 {}", TEXT_MUTED, NO_UNDERLINE)>
+                <A href="/register" attr:class=NAV_LINK_SM>
                     {move || t!(i18n, register)}
                 </A>
             })
@@ -221,10 +220,10 @@ fn HamburgerMenu() -> impl IntoView {
                 style="right:1rem"
             >
                 <div class="px-4 py-3 flex flex-col gap-2">
-                    <A href="/footballs" on:click=close attr:class=format!("{} hover:text-blue-600", TEXT_MUTED)>
+                    <A href="/footballs" on:click=close attr:class=NAV_LINK>
                         {move || t!(i18n, nav_football)}
                     </A>
-                    <A href="/users" on:click=close attr:class=format!("{} hover:text-blue-600", TEXT_MUTED)>
+                    <A href="/users" on:click=close attr:class=NAV_LINK>
                         {move || t!(i18n, nav_user)}
                     </A>
                     <Random/>
@@ -240,10 +239,10 @@ fn HamburgerMenu() -> impl IntoView {
                             })
                         } else {
                             Either::Right(view! {
-                                <A href="/sign-in" on:click=close attr:class=format!("text-sm {} hover:text-blue-600", TEXT_MUTED)>
+                                <A href="/sign-in" on:click=close attr:class=NAV_LINK_SM>
                                     {move || t!(i18n, sign_in)}
                                 </A>
-                                <A href="/register" on:click=close attr:class=format!("text-sm {} hover:text-blue-600", TEXT_MUTED)>
+                                <A href="/register" on:click=close attr:class=NAV_LINK_SM>
                                     {move || t!(i18n, register)}
                                 </A>
                             })

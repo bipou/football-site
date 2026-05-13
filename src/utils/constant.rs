@@ -28,6 +28,11 @@ pub const H1: &str = "text-xl font-bold text-gray-800 dark:text-gray-100 mb-6";
 pub const SECTION_H2: &str = "text-base font-semibold text-gray-700 dark:text-gray-200 mb-4";
 pub const FLEX_WRAP_GAP: &str = "flex flex-wrap gap-2";
 
+// ── Nav link patterns ─────────────────────────────────────────────────────
+pub const NAV_LINK: &str = "text-gray-600 dark:text-gray-300 hover:text-blue-600 no-underline";
+pub const NAV_LINK_SM: &str =
+    "text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 no-underline";
+
 // ── Config (SSR only) ──────────────────────────────────────────────────────
 #[cfg(feature = "ssr")]
 use std::sync::LazyLock;
