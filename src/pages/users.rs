@@ -112,7 +112,6 @@ pub fn UsersPage() -> impl IntoView {
 
 // ── User profile sub-components ──────────────────────────────────────────
 
-
 #[component]
 fn IntroSection(intro_html: String) -> impl IntoView {
     let i18n = use_i18n();
@@ -178,8 +177,6 @@ fn KeywordsTags(
         })
     }
 }
-
-
 
 #[component]
 fn ContactSection(is_signed_in: bool, _user: User) -> impl IntoView {

@@ -23,6 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let mut cfg = Config::new(&default)?;
+    cfg.options.interpolate_display = true;
     for loc in &locales {
         if loc != &default {
             cfg = cfg.add_locale(loc)?;

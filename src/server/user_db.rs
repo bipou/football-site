@@ -291,9 +291,7 @@ pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
 }
 
 /// Convenience lookup returning `(email, nickname, username)`.
-pub async fn get_user_email_username(
-    user_id: &str,
-) -> Result<Option<(String, String)>, String> {
+pub async fn get_user_email_username(user_id: &str) -> Result<Option<(String, String)>, String> {
     Ok(get_user_doc_by_id(user_id)
         .await?
         .map(|u| (u.email, u.username)))

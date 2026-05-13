@@ -91,9 +91,7 @@ pub async fn register(
 
     // Send activation email (non-fatal)
     if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_id).await {
-        let _ =
-            email_mod::send_activation_email(&lang, &username, &user_id, &email_addr)
-                .await;
+        let _ = email_mod::send_activation_email(&lang, &username, &user_id, &email_addr).await;
     }
 
     Ok(())

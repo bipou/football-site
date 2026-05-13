@@ -1,6 +1,5 @@
 use crate::i18n::{Locale, td_string};
 use crate::utils::constant;
-use leptos_i18n::Locale as LocaleTrait;
 use lettre::{
     Message, SmtpTransport, Transport, message::header::ContentType,
     transport::smtp::authentication::Credentials,
