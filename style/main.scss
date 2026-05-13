@@ -258,5 +258,20 @@ article.prose-sm img{max-width:100%}
   .hm-menu .hm-signout { color: #9ca3af; }
   .hm-menu .hm-signout:hover { color: #f87171; }
 }
-.hm-menu hr { border: none; border-top: 1px dashed #d1d5db; }
+.hm-menu hr { border: none; border-top: 1px dashed #d1d5db; margin: -0.25rem 0; }
 @include dark { .hm-menu hr { border-top-color: #4b5563; } }
+
+
+// ── Language dropdown options ───────────────────────────────────────────
+.lang-list button { display: block; width: 100%; text-align: left; padding: 0.5rem 0.75rem; font-size: 0.875rem; border: 0; cursor: pointer; background: transparent; color: #374151; text-decoration: none; }
+.lang-list button:hover { background: #f3f4f6; }
+.lang-list .lang-active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+@include dark {
+  .lang-list button { color: #e5e7eb; }
+  .lang-list button:hover { background: #374151; }
+  .lang-list .lang-active { background: rgba(30,58,95,.4); color: #93c5fd; }
+}
+
+.nav-links a, a.nav-links { color: #6b7280; text-decoration: none; }
+.nav-links a:hover, a.nav-links:hover { color: #2563eb; text-decoration: none; }
+@include dark { .nav-links a, a.nav-links { color: #d1d5db; } }

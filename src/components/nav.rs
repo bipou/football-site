@@ -29,7 +29,7 @@ extern "C" {
 }
 
 use crate::utils::constant::{
-    BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NAV_LINK, NAV_LINK_SM, NO_UNDERLINE,
+    BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NO_UNDERLINE,
 };
 use leptos_i18n::Locale as LocaleTrait;
 
@@ -54,10 +54,10 @@ fn Logo() -> impl IntoView {
 fn NavLinks() -> impl IntoView {
     let i18n = use_i18n();
     view! {
-        <A href="/footballs" attr:class=NAV_LINK>
+        <A href="/footballs">
             {move || t!(i18n, nav_football)}
         </A>
-        <A href="/users" attr:class=NAV_LINK>
+        <A href="/users">
             {move || t!(i18n, nav_user)}
         </A>
     }
@@ -67,7 +67,7 @@ fn NavLinks() -> impl IntoView {
 fn NavLeft() -> impl IntoView {
     view! {
         <Logo/>
-        <div class="hidden sm:flex items-center gap-5 text-base">
+        <div class="nav-links hidden sm:flex items-center gap-5 text-base">
             <NavLinks/>
         </div>
     }
@@ -116,7 +116,7 @@ fn LangDropdown() -> impl IntoView {
                 <span class="hidden sm:inline ml-1 opacity-50">"▾"</span>
             </button>
             <div
-                class=move || format!("{} border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50", BG_CARD,
+                class=move || format!("lang-list {} border border-gray-200 dark:border-gray-700 rounded shadow-md py-1 {} absolute top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50", BG_CARD,
                     if open.get() { "" } else { "hidden" })
             >
                 {Locale::get_all().iter().map(|&locale| {
@@ -124,10 +124,7 @@ fn LangDropdown() -> impl IntoView {
                     view! {
                         <button
                             on:click=move |_| { i18n.set_locale(locale); set_open.set(false); }
-                            class=move || format!("block w-full text-left px-3 py-1.5 text-sm border-0 cursor-pointer {} {}",
-                                if is_current { "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold" }
-                                else { "bg-transparent text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" },
-                                NO_UNDERLINE)
+                            class=move || if is_current { "lang-active" } else { "" }
                         >
                             {td_string!(locale, lang_current)}
                         </button>
@@ -173,10 +170,10 @@ fn AuthSection() -> impl IntoView {
             })
         } else {
             Either::Right(view! {
-                <A href="/sign-in" attr:class=NAV_LINK_SM>
+                <A href="/sign-in" attr:class="nav-links text-sm">
                     {move || t!(i18n, sign_in)}
                 </A>
-                <A href="/register" attr:class=NAV_LINK_SM>
+                <A href="/register" attr:class="nav-links text-sm">
                     {move || t!(i18n, register)}
                 </A>
             })
@@ -220,12 +217,13 @@ fn HamburgerMenu() -> impl IntoView {
                 style="right:1rem"
             >
                 <div class="px-4 py-3 flex flex-col gap-2">
-                    <A href="/footballs" on:click=close attr:class=NAV_LINK>
+                    <div class="nav-links flex flex-col gap-2"><A href="/footballs" on:click=close>
                         {move || t!(i18n, nav_football)}
                     </A>
-                    <A href="/users" on:click=close attr:class=NAV_LINK>
+                    <A href="/users" on:click=close>
                         {move || t!(i18n, nav_user)}
                     </A>
+                    </div>
                     <Random/>
                 </div>
                 <hr/>
@@ -238,14 +236,14 @@ fn HamburgerMenu() -> impl IntoView {
                                 </A>
                             })
                         } else {
-                            Either::Right(view! {
-                                <A href="/sign-in" on:click=close attr:class=NAV_LINK_SM>
+                            Either::Right(view! { <div class="nav-links text-sm flex flex-col gap-2">
+                                <A href="/sign-in" on:click=close>
                                     {move || t!(i18n, sign_in)}
                                 </A>
-                                <A href="/register" on:click=close attr:class=NAV_LINK_SM>
+                                <A href="/register" on:click=close>
                                     {move || t!(i18n, register)}
                                 </A>
-                            })
+                            </div> })
                         }
                     }}
                 </div>
