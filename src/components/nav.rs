@@ -28,9 +28,7 @@ extern "C" {
     fn toggle_theme();
 }
 
-use crate::utils::constant::{
-    BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NO_UNDERLINE,
-};
+use crate::utils::constant::{BG_CARD, FLEX_BETWEEN, HOVER_NO_UNDERLINE, NO_UNDERLINE};
 use leptos_i18n::Locale as LocaleTrait;
 
 // ── Sub-components ────────────────────────────────────────────────────────
@@ -120,11 +118,11 @@ fn LangDropdown() -> impl IntoView {
                     if open.get() { "" } else { "hidden" })
             >
                 {Locale::get_all().iter().map(|&locale| {
-                    let is_current = i18n.get_locale() == locale;
+                    
                     view! {
                         <button
                             on:click=move |_| { i18n.set_locale(locale); set_open.set(false); }
-                            class=move || if is_current { "lang-active" } else { "" }
+                            class=move || if i18n.get_locale() == locale { "lang-active" } else { "" }
                         >
                             {td_string!(locale, lang_current)}
                         </button>
