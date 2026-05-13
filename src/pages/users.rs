@@ -16,7 +16,6 @@ use crate::models::{User, UsersResult};
 
 const CARD_BLOCK_NO_UL: &str = "card p-4 block no-underline hover:shadow-md transition-shadow";
 const ITALIC_CLASS: &str = "text-sm text-gray-400 italic";
-const WEBSITE_LINK_CLASS: &str = "text-blue-500 hover:underline ml-1 break-all";
 const PROSE_CLASS: &str = "prose prose-sm dark:prose-invert max-w-none";
 const RISK_CLASS: &str = "text-xs text-gray-400 text-center mt-6";
 
@@ -71,8 +70,9 @@ pub fn UsersPage() -> impl IntoView {
                         Either::Right(view! {
                             <div class={format!("{} mb-8", GRID_3)}>
                                 {d.items.into_iter().map(|u| {
+                                    let username = u.username.clone();
                                     let url = format!("/users/{}", u.username);
-                                    let initial = u.nickname.chars().next().unwrap_or('?');
+                                    let initial = u.username.chars().next().unwrap_or('?');
                                     view! {
                                         <a href=url class=CARD_BLOCK_NO_UL>
                                             <div class="flex items-center gap-3 mb-2">
@@ -80,8 +80,8 @@ pub fn UsersPage() -> impl IntoView {
                                                     {initial.to_string()}
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <p class="font-semibold text-gray-800 dark:text-gray-100 truncate">{u.nickname}</p>
-                                                    <p class="text-xs text-gray-400">@ {u.username}</p>
+                                                    <p class="font-semibold text-gray-800 dark:text-gray-100 truncate">{username.clone()}</p>
+                                                    <p class="text-xs text-gray-400">@ {username.clone()}</p>
                                                 </div>
                                             </div>
                                             <p class="text-xs text-gray-400">{move || t!(i18n, registration_time)} {u.created_at}</p>
@@ -112,23 +112,6 @@ pub fn UsersPage() -> impl IntoView {
 
 // ── User profile sub-components ──────────────────────────────────────────
 
-#[component]
-fn WebsiteLink(website: String) -> impl IntoView {
-    let i18n = use_i18n();
-    if website.is_empty() {
-        Either::Left(())
-    } else {
-        let href = website.clone();
-        Either::Right(view! {
-            <p class="text-sm mb-2">
-                <span class="text-gray-500">{move || t!(i18n, user_website)} </span>
-                <a href=href target="_blank" class=WEBSITE_LINK_CLASS>
-                    {website}
-                </a>
-            </p>
-        })
-    }
-}
 
 #[component]
 fn IntroSection(intro_html: String) -> impl IntoView {
@@ -196,38 +179,14 @@ fn KeywordsTags(
     }
 }
 
-#[component]
-fn ContactInfo(user: User) -> impl IntoView {
-    let i18n = use_i18n();
-    if !user.phone_number.is_empty() && user.phone_public {
-        Either::Left(view! {
-            <p><span class="text-gray-500">{move || t!(i18n, user_phone)} </span>{user.phone_number}</p>
-        })
-    } else {
-        Either::Right(())
-    }
-}
+
 
 #[component]
-fn ImInfo(user: User) -> impl IntoView {
-    let i18n = use_i18n();
-    if !user.im_account.is_empty() && user.im_public {
-        Either::Left(view! {
-            <p><span class="text-gray-500">{move || t!(i18n, user_im)} </span>{user.im_account}</p>
-        })
-    } else {
-        Either::Right(())
-    }
-}
-
-#[component]
-fn ContactSection(is_signed_in: bool, user: User) -> impl IntoView {
+fn ContactSection(is_signed_in: bool, _user: User) -> impl IntoView {
     let i18n = use_i18n();
     if is_signed_in {
         Either::Left(view! {
             <div class="text-sm space-y-1">
-                <ContactInfo user=user.clone()/>
-                <ImInfo user=user/>
             </div>
         })
     } else {
@@ -269,12 +228,11 @@ pub fn UserProfilePage() -> impl IntoView {
                     })),
                     Ok(Some(user)) => {
                         let is_signed_in = auth.is_some();
-                        let nickname = user.nickname.clone();
+                        let _username = user.username.clone();
                         let username = user.username.clone();
                         let created_at = user.created_at.clone();
-                        let title = format!("{} – {}", nickname, site_title!(i18n));
-                        let initial = user.nickname.chars().next().unwrap_or('?');
-                        let website = user.website.clone();
+                        let title = format!("{} – {}", username, site_title!(i18n));
+                        let initial = user.username.chars().next().unwrap_or('?');
                         let intro_html = user.introduction_html.clone();
                         let keywords = user.keywords.clone();
                         let topics = user.topics.clone();
@@ -287,14 +245,13 @@ pub fn UserProfilePage() -> impl IntoView {
                                         {initial.to_string()}
                                     </div>
                                     <div>
-                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{nickname}</h1>
-                                        <p class="text-sm text-gray-500">@ {username}</p>
+                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{username.clone()}</h1>
+                                        <p class="text-sm text-gray-500">@ {username.clone()}</p>
                                         <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {created_at}</p>
                                     </div>
                                 </div>
 
-                                <WebsiteLink website=website/>
-                                <ContactSection is_signed_in=is_signed_in user=user/>
+                                <ContactSection is_signed_in=is_signed_in _user=user/>
                             </div>
 
                             <IntroSection intro_html=intro_html/>

@@ -5,13 +5,17 @@
   "site_slogan": "足球数据实验室",
   "site_intro": "毕剖，足球数据计算：毕力殚剖，不如一蒙？\nRust 全栈同构，基于 Leptos、SurrealDB、Axum 构建。",
   "site_warn": "纯属娱乐，勿做参考。",
-  
+
   "nav_football": "足球计算",
   "nav_user": "足球迷",
   "rand": "随意一瞥",
   "odds": "赔率",
   "calc": "计算",
   "more": "更多 ...",
+
+  "loading": "加载中...",
+  "error_404": "页面未找到",
+  "go_home": "返回首页",
 
   "footballs_today": "今日最新计算",
   "footballs_yesterday": "昨日计算复盘",
@@ -66,14 +70,7 @@
   "register_email_tip": "常用邮箱",
   "register_password": "密码",
   "register_password_tip": "请勿过于简单",
-  "register_nickname": "昵称",
-  "register_nickname_tip": "昵称或花名",
-  "register_phone": "手机",
-  "register_phone_tip": "常用手机号码",
-  "register_im": "交流工具",
-  "register_im_tip": "微信、QQ、WhatsApp 等",
-  "register_website": "网站",
-  "register_website_tip": "个人网站（请包含 https://）",
+  "register_password2": "确认密码",
   "register_topics": "关键词",
   "register_topics_tip": "以逗号或空格分隔",
   "register_intro": "简介",
@@ -88,9 +85,6 @@
   "features_keys_tags": "特点关键词/标签：",
   "related_keys_tags": "涉猎关键词/标签：",
   "user_intro_label": "用户简介",
-  "user_website": "个人网站：",
-  "user_phone": "手机号码：",
-  "user_im": "交流工具：",
   "user_view_contact": "签入后可查看联系信息",
   "user_risk_tip": "本网站仅提供用户信息聚合，不负任何法律责任。",
 
@@ -99,6 +93,8 @@
   "user_re_activate": "激活邮件已重新发送！",
   "user_activate_problem": "有问题？请联系 ask@rusthub.org",
   "resend_activation": "重新发送激活邮件",
+  "email_activation_subject": "{{ username }}，来自毕剖的账户激活邮件",
+  "email_activation_body": "你好，{{ username }}！\n\n请点击以下链接激活您的毕剖账户：\n\n{{ url }}\n\n若非本人操作，请忽略此邮件。\n\n毕剖 https://{{ domain }}",
 
   "pagination_previous": "← 前页",
   "pagination_next": "后页 →",
@@ -110,9 +106,5 @@
   "status_hide": "隐藏",
   "status_publish": "发布",
   "status_hot": "热门",
-  "status_picks": "精选",
-
-  "loading": "加载中...",
-  "error_404": "页面未找到",
-  "go_home": "返回首页"
+  "status_picks": "精选"
 }

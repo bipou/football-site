@@ -5,13 +5,17 @@
   "site_slogan": "Football Data Lab",
   "site_intro": "BiPou, Football Data Calculation: exhaustive analysis is NO BETTER than a wild guess? \nRust full-stack isomorphic application, built with Leptos, SurrealDB, and Axum.",
   "site_warn": "For entertainment only. Not a reference.",
-  
+
   "nav_football": "Football Calculation",
   "nav_user": "Football Fans",
   "rand": "Random glance",
   "odds": "Odds",
   "calc": "Calculation",
   "more": "More ...",
+
+  "loading": "Loading...",
+  "error_404": "Page not found",
+  "go_home": "Go Home",
 
   "footballs_today": "Today's Latest Calculations",
   "footballs_yesterday": "Yesterday's Calculations Review",
@@ -66,14 +70,7 @@
   "register_email_tip": "Your frequently-used email",
   "register_password": "Password",
   "register_password_tip": "Choose a strong password",
-  "register_nickname": "Nickname",
-  "register_nickname_tip": "Display name",
-  "register_phone": "Phone",
-  "register_phone_tip": "Frequently-used phone number",
-  "register_im": "IM",
-  "register_im_tip": "WhatsApp, WeChat, QQ, etc.",
-  "register_website": "Website",
-  "register_website_tip": "Personal website (include https://)",
+  "register_password2": "Confirm password",
   "register_topics": "Keywords",
   "register_topics_tip": "Separated by comma or space",
   "register_intro": "Introduction",
@@ -88,9 +85,6 @@
   "features_keys_tags": "Feature tags:",
   "related_keys_tags": "Related tags:",
   "user_intro_label": "Introduction",
-  "user_website": "Website:",
-  "user_phone": "Phone:",
-  "user_im": "IM:",
   "user_view_contact": "Sign in to view contact details",
   "user_risk_tip": "This site aggregates user info only. Identify risks yourself.",
 
@@ -99,6 +93,8 @@
   "user_re_activate": "Activation email re-sent!",
   "user_activate_problem": "Having problems? Contact ask@rusthub.org",
   "resend_activation": "Resend activation email",
+  "email_activation_subject": "{{ username }}, account activation email from bipou.com",
+  "email_activation_body": "Hi {{ username }}!\n\nPlease click the link below to activate your BiPou account:\n\n{{ url }}\n\nIf you did not register, please ignore this email.\n\nBiPou https://{{ domain }}",
 
   "pagination_previous": "← Previous",
   "pagination_next": "Next →",
@@ -110,9 +106,5 @@
   "status_hide": "Hide",
   "status_publish": "Publish",
   "status_hot": "Hot",
-  "status_picks": "Picks",
-
-  "loading": "Loading...",
-  "error_404": "Page not found",
-  "go_home": "Go Home"
+  "status_picks": "Picks"
 }

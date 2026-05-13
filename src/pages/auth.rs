@@ -90,9 +90,9 @@ pub async fn register(
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
     // Send activation email (non-fatal)
-    if let Ok(Some((email_addr, _, _))) = user_db::get_user_email_nickname(&user_id).await {
+    if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_id).await {
         let _ =
-            email_mod::send_activation_email(&lang, &username, &nickname, &user_id, &email_addr)
+            email_mod::send_activation_email(&lang, &username, &user_id, &email_addr)
                 .await;
     }
 
@@ -112,11 +112,11 @@ pub async fn activate_user(user_id: String) -> Result<Option<String>, ServerFnEr
 #[server]
 pub async fn resend_activation(user_id: String, lang: String) -> Result<(), ServerFnError> {
     use crate::server::{email as email_mod, user_db};
-    let (email, nickname, username) = user_db::get_user_email_nickname(&user_id)
+    let (email, username) = user_db::get_user_email_username(&user_id)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?
         .ok_or_else(|| ServerFnError::new("User not found".to_string()))?;
-    email_mod::send_activation_email(&lang, &username, &nickname, &user_id, &email)
+    email_mod::send_activation_email(&lang, &username, &user_id, &email)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))
 }
@@ -277,29 +277,10 @@ pub fn RegisterPage() -> impl IntoView {
                                        class="form-input " autocomplete="new-password"/>
                             </div>
                             <div>
-                                <label class="form-label">{move || t!(i18n, register_nickname)} " *"</label>
-                                <input type="text" name="nickname" required
-                                       placeholder=move || String::from("") /* was: t!(i18n, register_nickname_tip) */
-                                       class="form-input "/>
+                                <label class="form-label">{move || t!(i18n, register_password2)} " *"</label>
+                                <input type="password" name="confirm_password" required
+                                       class="form-input " autocomplete="new-password"/>
                             </div>
-                            <div>
-                                <label class="form-label">{move || t!(i18n, register_phone)}</label>
-                                <input type="text" name="phone_number"
-                                       placeholder=move || String::from("") /* was: t!(i18n, register_phone_tip) */
-                                       class="form-input "/>
-                            </div>
-                            <div>
-                                <label class="form-label">{move || t!(i18n, register_im)}</label>
-                                <input type="text" name="im_account"
-                                       placeholder=move || String::from("") /* was: t!(i18n, register_im_tip) */
-                                       class="form-input "/>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="form-label">{move || t!(i18n, register_website)}</label>
-                            <input type="url" name="website"
-                                   placeholder=move || String::from("") /* was: t!(i18n, register_website_tip) */
-                                   class="form-input "/>
                         </div>
                         <div>
                             <label class="form-label">{move || t!(i18n, register_topics)}</label>
@@ -367,11 +348,11 @@ pub fn UserActivatePage() -> impl IntoView {
                     {move || activate_res.get().map(|result| match result {
                         Err(e) => Either3::Left(view! { <p class="text-red-500">{e.to_string()}</p> }),
                         Ok(None) => Either3::Right(Either::Left(view! { <p class="text-gray-500">"User not found."</p> })),
-                        Ok(Some(nickname)) => Either3::Right(Either::Right(view! {
+                        Ok(Some(username)) => Either3::Right(Either::Right(view! {
                             <div class="space-y-4">
                                 <div class="text-5xl">"✅"</div>
                                 <p class="text-green-600 dark:text-green-400 font-semibold text-lg">
-                                    {nickname} " — " {move || t!(i18n, user_activated)}
+                                    {username} " — " {move || t!(i18n, user_activated)}
                                 </p>
                                 <a href="/sign-in" class="btn-primary inline-block">
                                     {move || t!(i18n, sign_in)}

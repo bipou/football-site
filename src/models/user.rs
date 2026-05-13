@@ -7,12 +7,6 @@ pub struct User {
     pub id: String,
     pub username: String,
     pub email: String,
-    pub nickname: String,
-    pub phone_number: String,
-    pub phone_public: bool,
-    pub im_account: String,
-    pub im_public: bool,
-    pub website: String,
     pub introduction: String,
     /// Markdown rendered to HTML (computed server-side)
     pub introduction_html: String,
@@ -29,7 +23,6 @@ pub struct User {
 pub struct UserSummary {
     pub id: String,
     pub username: String,
-    pub nickname: String,
     pub created_at: String,
     pub status: i8,
     pub keywords: Vec<Topic>,

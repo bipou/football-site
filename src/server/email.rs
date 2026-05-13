@@ -1,4 +1,6 @@
+use crate::i18n::{Locale, td_string};
 use crate::utils::constant;
+use leptos_i18n::Locale as LocaleTrait;
 use lettre::{
     Message, SmtpTransport, Transport, message::header::ContentType,
     transport::smtp::authentication::Credentials,
@@ -7,7 +9,6 @@ use lettre::{
 pub async fn send_activation_email(
     lang: &str,
     username: &str,
-    nickname: &str,
     user_id: &str,
     email_to: &str,
 ) -> Result<(), String> {
@@ -18,21 +19,15 @@ pub async fn send_activation_email(
     let pass = constant::config().email_password.clone();
     let url = format!("https://{domain}/users/{user_id}/activate");
 
-    let (subject, body) = if lang == "zh" {
-        (
-            format!("{nickname}（{username}），来自毕剖的账户激活邮件"),
-            format!(
-                "你好，{nickname}（{username}）！\n\n请点击以下链接激活您的毕剖账户：\n\n{url}\n\n若非本人操作，请忽略此邮件。\n\n毕剖 https://{domain}"
-            ),
-        )
-    } else {
-        (
-            format!("{nickname} ({username}), account activation email from bipou.com"),
-            format!(
-                "Hi {nickname} ({username})!\n\nPlease click the link below to activate your BiPou account:\n\n{url}\n\nIf you did not register, please ignore this email.\n\nBiPou https://{domain}"
-            ),
-        )
-    };
+    let locale = lang.parse::<Locale>().unwrap_or_default();
+    let subject = td_string!(locale, email_activation_subject, username = username);
+    let body = td_string!(
+        locale,
+        email_activation_body,
+        username = username,
+        url = url,
+        domain = domain
+    );
 
     let email = Message::builder()
         .from(

@@ -100,7 +100,6 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
         items.push(UserSummary {
             id: uid,
             username: d.username,
-            nickname: d.nickname,
             created_at: common::ymdhmsz8(&d.created_at),
             status: d.status,
             keywords,
@@ -140,12 +139,6 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
         id: uid,
         username: d.username,
         email: d.email,
-        nickname: d.nickname,
-        phone_number: d.phone_number,
-        phone_public: d.phone_public,
-        im_account: d.im_account,
-        im_public: d.im_public,
-        website: d.website,
         introduction_html: render_md(&d.introduction),
         introduction: d.introduction,
         created_at: common::ymdhmsz8(&d.created_at),
@@ -298,10 +291,10 @@ pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
 }
 
 /// Convenience lookup returning `(email, nickname, username)`.
-pub async fn get_user_email_nickname(
+pub async fn get_user_email_username(
     user_id: &str,
-) -> Result<Option<(String, String, String)>, String> {
+) -> Result<Option<(String, String)>, String> {
     Ok(get_user_doc_by_id(user_id)
         .await?
-        .map(|u| (u.email, u.nickname, u.username)))
+        .map(|u| (u.email, u.username)))
 }
