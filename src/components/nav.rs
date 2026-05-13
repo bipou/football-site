@@ -118,7 +118,6 @@ fn LangDropdown() -> impl IntoView {
                     if open.get() { "" } else { "hidden" })
             >
                 {Locale::get_all().iter().map(|&locale| {
-                    
                     view! {
                         <button
                             on:click=move |_| { i18n.set_locale(locale); set_open.set(false); }

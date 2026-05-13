@@ -2,7 +2,7 @@ use crate::i18n::t;
 use crate::page_title;
 use crate::site_title;
 use crate::utils::constant::{
-    BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_3, H1, MAIN,
+    BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_3, H1, MAIN, WIDE,
 };
 use leptos::either::Either;
 use leptos::prelude::*;
@@ -57,7 +57,7 @@ pub fn UsersPage() -> impl IntoView {
     view! {
         <Title text=move || page_title!(i18n, users_list)/>
         <Nav/>
-        <main class={MAIN}>
+        <main class={WIDE}>
             <h1 class={H1}>
                 {move || t!(i18n, users_list)}
             </h1>

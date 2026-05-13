@@ -217,6 +217,7 @@ article.prose-sm img{max-width:100%}
 
 // ── Responsive ─────────────────────────────────────────────────────────────────
 @media(min-width:640px){
+  .sm:grid-cols-2{grid-template-columns:repeat(2,1fr)}
   .sm\:flex{display:flex}.sm\:inline{display:inline}.sm\:inline-flex{display:inline-flex}
   .sm\:hidden{display:none}
 }
