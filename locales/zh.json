@@ -1,13 +1,11 @@
 {
+  "lang": "中文",
+
   "site_name": "毕剖",
   "site_slogan": "足球数据实验室",
   "site_intro": "毕剖，足球数据计算：毕力殚剖，不如一蒙？\nRust 全栈同构，基于 Leptos、SurrealDB、Axum 构建。",
   "site_warn": "纯属娱乐，勿做参考。",
-
-  "lang_current": "中文",
-  "lang_zh": "中文",
-  "lang_en": "English",
-
+  
   "nav_football": "足球计算",
   "nav_user": "足球迷",
   "rand": "随意一瞥",

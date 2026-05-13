@@ -110,7 +110,7 @@ fn LangDropdown() -> impl IntoView {
                 }
             >
                 "🌐 "
-                <span class="hidden sm:inline">{move || t!(i18n, lang_current)}</span>
+                <span class="hidden sm:inline">{move || t!(i18n, lang)}</span>
                 <span class="hidden sm:inline ml-1 opacity-50">"▾"</span>
             </button>
             <div
@@ -124,7 +124,7 @@ fn LangDropdown() -> impl IntoView {
                             on:click=move |_| { i18n.set_locale(locale); set_open.set(false); }
                             class=move || if i18n.get_locale() == locale { "lang-active" } else { "" }
                         >
-                            {td_string!(locale, lang_current)}
+                            {td_string!(locale, lang)}
                         </button>
                     }
                 }).collect::<Vec<_>>()}
