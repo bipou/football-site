@@ -59,12 +59,6 @@ pub async fn register(
     username: String,
     email: String,
     password: String,
-    nickname: String,
-    phone_number: String,
-    phone_public: bool,
-    im_account: String,
-    im_public: bool,
-    website: String,
     introduction: String,
     topics: String,
     lang: String,
@@ -75,17 +69,11 @@ pub async fn register(
         username,
         email,
         password,
-        nickname: nickname.clone(),
-        phone_number,
-        phone_public,
-        im_account,
-        im_public,
-        website,
         introduction,
         topics,
     };
 
-    let (user_id, _, username) = user_db::register_user(data)
+    let (user_id, username) = user_db::register_user(data)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
@@ -252,9 +240,6 @@ pub fn RegisterPage() -> impl IntoView {
                     <div class="space-y-4">
                     <ActionForm action=action>
                         <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
-                        <input type="hidden" name="phone_public" value="false"/>
-                        <input type="hidden" name="im_public" value="false"/>
-
                         <div class=GRID_2>
                             <div>
                                 <label class="form-label">{move || t!(i18n, register_username)} " *"</label>

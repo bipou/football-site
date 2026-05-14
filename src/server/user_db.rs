@@ -27,17 +27,6 @@ pub struct UserDoc {
     username: String,
     email: String,
     cred: String,
-    nickname: String,
-    #[serde(default)]
-    phone_number: String,
-    #[serde(default)]
-    phone_public: bool,
-    #[serde(default)]
-    im_account: String,
-    #[serde(default)]
-    im_public: bool,
-    #[serde(default)]
-    website: String,
     #[serde(default)]
     introduction: String,
     created_at: Datetime,
@@ -56,12 +45,6 @@ pub struct RegisterData {
     pub username: String,
     pub email: String,
     pub password: String,
-    pub nickname: String,
-    pub phone_number: String,
-    pub phone_public: bool,
-    pub im_account: String,
-    pub im_public: bool,
-    pub website: String,
     pub introduction: String,
     pub topics: String,
 }
@@ -204,8 +187,8 @@ pub async fn sign_in(signature: &str, password: &str) -> Result<AuthUser, String
     })
 }
 
-/// Register a new user (status=0).  Returns `(user_id, nickname, username)`.
-pub async fn register_user(data: RegisterData) -> Result<(String, String, String), String> {
+/// Register a new user (status=0).  Returns `(user_id, username)`.
+pub async fn register_user(data: RegisterData) -> Result<(String, String), String> {
     let username = data.username.trim().to_lowercase();
     let email = data.email.trim().to_lowercase();
 
@@ -222,20 +205,12 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String, String
     }
 
     let cred = auth_mod::hash_credential(&username, &data.password);
-    let nickname = data.nickname.trim().to_string();
-
     let mut resp = get_db()
         .query(
             "CREATE users CONTENT { \
                 username: $username, \
                 email: $email, \
                 cred: $cred, \
-                nickname: $nickname, \
-                phone_number: $phone_number, \
-                phone_public: $phone_public, \
-                im_account: $im_account, \
-                im_public: $im_public, \
-                website: $website, \
                 introduction: $introduction, \
                 created_at: time::now(), \
                 updated_at: time::now(), \
@@ -245,12 +220,6 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String, String
         .bind(("username", username.clone()))
         .bind(("email", email.clone()))
         .bind(("cred", cred))
-        .bind(("nickname", nickname.clone()))
-        .bind(("phone_number", data.phone_number.trim().to_owned()))
-        .bind(("phone_public", data.phone_public))
-        .bind(("im_account", data.im_account.trim().to_owned()))
-        .bind(("im_public", data.im_public))
-        .bind(("website", data.website.trim().to_owned()))
         .bind(("introduction", data.introduction.trim().to_owned()))
         .await
         .map_err(|e| e.to_string())?;
@@ -264,10 +233,10 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String, String
         topic_db::link_topics_to_user(&uid_str, tids).await?;
     }
 
-    Ok((uid_str, nickname, username))
+    Ok((uid_str, username))
 }
 
-/// Set status 0 → 1.  Returns the user's nickname if activation happened.
+/// Set status 0 → 1.  Returns the user's username if activation happened.
 pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
     let rid = common::record_id("users", user_id);
 
@@ -287,10 +256,10 @@ pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
             .map_err(|e| e.to_string())?;
     }
 
-    Ok(Some(u.nickname))
+    Ok(Some(u.username))
 }
 
-/// Convenience lookup returning `(email, nickname, username)`.
+/// Convenience lookup returning `(email, username)`.
 pub async fn get_user_email_username(user_id: &str) -> Result<Option<(String, String)>, String> {
     Ok(get_user_doc_by_id(user_id)
         .await?
