@@ -24,6 +24,7 @@ pub struct UserSummary {
     pub id: String,
     pub username: String,
     pub created_at: String,
+    pub updated_at: String,
     pub status: i8,
     pub keywords: Vec<Topic>,
     pub topics: Vec<Topic>,

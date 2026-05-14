@@ -70,6 +70,14 @@ pub fn rid_str(r: &RecordId) -> String {
 
 // ── Datetime helpers (server only) ────────────────────────────────────────────
 
+/// Format a SurrealDB Datetime as "%Y-%m-%d" in UTC+8.
+#[cfg(feature = "ssr")]
+pub fn ymd8(dt: &surrealdb::types::Datetime) -> String {
+    use chrono::FixedOffset;
+    let tz8 = FixedOffset::east_opt(8 * 3600).unwrap();
+    dt.with_timezone(&tz8).format("%Y-%m-%d").to_string()
+}
+
 /// Format a SurrealDB Datetime as "%Y-%m-%d %H:%M:%S%:z" in UTC+8.
 #[cfg(feature = "ssr")]
 pub fn ymdhmsz8(dt: &surrealdb::types::Datetime) -> String {

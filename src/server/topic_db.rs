@@ -18,7 +18,7 @@ struct TopicDoc {
 
 #[derive(Debug, Deserialize, SurrealValue)]
 struct RelTopicId {
-    topic_id: RecordId,
+    topic_id: String,
 }
 
 #[derive(Debug, Deserialize, SurrealValue)]
@@ -55,7 +55,7 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 
     // Collect distinct topic_id values where football_id is set
     let q = format!(
-        "SELECT topic_id FROM topics_relevant WHERE football_id = {} AND football_id != NONE",
+        "SELECT topic_id FROM topics_relevant WHERE football_id = {} AND football_id IS NOT NONE",
         fid
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
@@ -63,7 +63,7 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 
     let mut tids: Vec<String> = Vec::new();
     for r in &rels {
-        let tid = common::rid_str(&r.topic_id);
+        let tid = format!("topics:{}", r.topic_id);
         if !tids.contains(&tid) {
             tids.push(tid);
         }
@@ -84,19 +84,18 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 }
 
 pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> {
-    let uid = common::record_id("users", user_id);
-
-    // Only topics where football_id is NONE (user's personal keywords)
+    // user_id in topics_relevant may be stored as plain string (not RecordId),
+    // so compare as string with quotes rather than RecordId literal.
     let q = format!(
-        "SELECT topic_id FROM topics_relevant WHERE user_id = {} AND football_id = NONE",
-        uid
+        "SELECT topic_id FROM topics_relevant WHERE user_id = '{}' AND football_id IS NONE",
+        user_id
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
     let rels: Vec<RelTopicId> = res.take(0).map_err(|e| e.to_string())?;
 
     let mut tids: Vec<String> = Vec::new();
     for r in &rels {
-        let tid = common::rid_str(&r.topic_id);
+        let tid = format!("topics:{}", r.topic_id);
         if !tids.contains(&tid) {
             tids.push(tid);
         }
@@ -117,19 +116,17 @@ pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String
 }
 
 pub async fn get_topics_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> {
-    let uid = common::record_id("users", user_id);
-
-    // All topics for the user (any football_id, including NONE)
+    // Same as get_keywords_by_user_id: use string comparison for user_id
     let q = format!(
-        "SELECT topic_id FROM topics_relevant WHERE user_id = {}",
-        uid
+        "SELECT topic_id FROM topics_relevant WHERE user_id = '{}'",
+        user_id
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
     let rels: Vec<RelTopicId> = res.take(0).map_err(|e| e.to_string())?;
 
     let mut tids: Vec<String> = Vec::new();
     for r in &rels {
-        let tid = common::rid_str(&r.topic_id);
+        let tid = format!("topics:{}", r.topic_id);
         if !tids.contains(&tid) {
             tids.push(tid);
         }
@@ -192,15 +189,13 @@ pub async fn create_topics_from_names(names: &str) -> Result<Vec<String>, String
 }
 
 pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Result<(), String> {
-    let uid = common::record_id("users", user_id);
-
     for tid in &topic_ids {
         let tid_full = common::record_id("topics", tid);
 
-        // Check if relation already exists (football_id = NONE for user keywords)
+        // Check if relation already exists (football_id IS NONE for user keywords)
         let check_sql = format!(
-            "SELECT id FROM topics_relevant WHERE user_id = {} AND topic_id = {} AND football_id = NONE",
-            uid, tid_full
+            "SELECT id FROM topics_relevant WHERE user_id = '{}' AND topic_id = {} AND football_id IS NONE",
+            user_id, tid_full
         );
         let mut res = get_db()
             .query(&check_sql)
@@ -210,8 +205,8 @@ pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Resul
 
         if rels.is_empty() {
             let create_sql = format!(
-                "CREATE topics_relevant CONTENT {{ user_id: {}, topic_id: {} }}",
-                uid, tid_full
+                "CREATE topics_relevant CONTENT {{ user_id: '{}', topic_id: {} }}",
+                user_id, tid_full
             );
             get_db()
                 .query(&create_sql)

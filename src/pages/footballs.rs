@@ -75,8 +75,19 @@ pub fn FootballsPage() -> impl IntoView {
             .and_then(|v| v.parse().ok())
             .unwrap_or(1i64)
     };
-    let filter = move || query.read().get("filter").unwrap_or_default();
-    let filter_id = move || query.read().get("fid").unwrap_or_default();
+    // Support both /footballs?filter=topic&fid=xxx and /footballs?topic=xxx
+    let filter = move || {
+        let q = query.read();
+        if q.get("topic").is_some() {
+            "topic".to_string()
+        } else {
+            q.get("filter").unwrap_or_default()
+        }
+    };
+    let filter_id = move || {
+        let q = query.read();
+        q.get("topic").or_else(|| q.get("fid")).unwrap_or_default()
+    };
 
     let cats_res = Resource::new(|| (), |_| get_sidebar_categories());
 
@@ -148,7 +159,11 @@ pub fn FootballsPage() -> impl IntoView {
                         }),
                         Ok(data) => {
                             let pi = data.page_info.clone();
-                            let base = format!("/footballs?filter={}&fid={}", filter(), filter_id());
+                            let base = if filter() == "topic" {
+                                format!("/footballs?topic={}", filter_id())
+                            } else {
+                                format!("/footballs?filter={}&fid={}", filter(), filter_id())
+                            };
                             if data.items.is_empty() {
                                 Either3::Right(Either::Left(view! {
                                     <p class=format!("text-gray-400 {}", EMPTY)>

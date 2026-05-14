@@ -2,20 +2,18 @@ use crate::i18n::t;
 use crate::page_title;
 use crate::site_title;
 use crate::utils::constant::{
-    BADGE_BLUE, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_3, H1, MAIN, WIDE,
+    BADGE_BLUE_NO_UL, BADGE_GRAY_NO_UL, EMPTY, FLEX_WRAP_GAP, GRID_3, H1, MAIN, WIDE,
 };
 use leptos::either::Either;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::{use_params_map, use_query_map};
 
-use crate::app::use_auth;
 use crate::components::{Footer, Nav, Pagination};
 use crate::i18n::use_i18n;
 use crate::models::{User, UsersResult};
 
 const CARD_BLOCK_NO_UL: &str = "card p-4 block no-underline hover:shadow-md transition-shadow";
-const ITALIC_CLASS: &str = "text-sm text-gray-400 italic";
 const PROSE_CLASS: &str = "prose prose-sm dark:prose-invert max-w-none";
 const RISK_CLASS: &str = "text-xs text-gray-400 text-center mt-6";
 
@@ -73,29 +71,32 @@ pub fn UsersPage() -> impl IntoView {
                                     let username = u.username.clone();
                                     let url = format!("/users/{}", u.username);
                                     let initial = u.username.chars().next().unwrap_or('?');
+                                    let updated = u.updated_at.clone();
                                     view! {
                                         <a href=url class=CARD_BLOCK_NO_UL>
-                                            <div class="flex items-center gap-3 mb-2">
-                                                <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 font-bold text-2xl shrink-0 mt-1">
                                                     {initial.to_string()}
                                                 </div>
-                                                <div class="min-w-0">
-                                                    <p class="font-semibold text-gray-800 dark:text-gray-100 truncate">{username.clone()}</p>
-                                                    <p class="text-xs text-gray-400">@ {username.clone()}</p>
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100 truncate">{username.clone()}</p>
+                                                    <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, profile_updated)} {updated}</p>
+                                                    {if !u.keywords.is_empty() {
+                                                        Either::Left(view! {
+                                                            <div class="flex flex-wrap gap-1 mt-1">
+                                                                {u.keywords.iter().take(8).map(|t| {
+                                                                    let url = format!("/footballs?topic={}", t.id);
+                                                                    view! {
+                                                                        <a href=url class=format!("text-sm {}", BADGE_BLUE_NO_UL)>{t.name.clone()}</a>
+                                                                    }
+                                                                }).collect::<Vec<_>>()}
+                                                            </div>
+                                                        })
+                                                    } else {
+                                                        Either::Right(())
+                                                    }}
                                                 </div>
                                             </div>
-                                            <p class="text-xs text-gray-400">{move || t!(i18n, registration_time)} {u.created_at}</p>
-                                            {if !u.keywords.is_empty() {
-                                                Either::Left(view! {
-                                                    <div class="flex flex-wrap gap-1 mt-2">
-                                                        {u.keywords.into_iter().take(5).map(|t| view! {
-                                                            <span class=BADGE_BLUE>{t.name}</span>
-                                                        }).collect::<Vec<_>>()}
-                                                    </div>
-                                                })
-                                            } else {
-                                                Either::Right(())
-                                            }}
                                         </a>
                                     }
                                 }).collect::<Vec<_>>()}
@@ -145,8 +146,11 @@ fn KeywordsTags(
                         <div class="mb-4">
                             <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_keys_tags)}</p>
                             <div class={FLEX_WRAP_GAP}>
-                                {keywords.iter().map(|t| view! {
-                                    <span class=BADGE_BLUE>{t.name.clone()}</span>
+                                {keywords.iter().map(|t| {
+                                    let url = format!("/footballs?topic={}", t.id);
+                                    view! {
+                                        <a href=url class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
+                                    }
                                 }).collect::<Vec<_>>()}
                             </div>
                         </div>
@@ -160,7 +164,7 @@ fn KeywordsTags(
                             <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_keys_tags)}</p>
                             <div class={FLEX_WRAP_GAP}>
                                 {topics.iter().map(|t| {
-                                    let url = format!("/footballs?filter=topic&fid={}", t.id);
+                                    let url = format!("/footballs?topic={}", t.id);
                                     view! {
                                         <a href=url class=BADGE_GRAY_NO_UL>
                                             {t.name.clone()}
@@ -179,30 +183,10 @@ fn KeywordsTags(
 }
 
 #[component]
-fn ContactSection(is_signed_in: bool, _user: User) -> impl IntoView {
-    let i18n = use_i18n();
-    if is_signed_in {
-        Either::Left(view! {
-            <div class="text-sm space-y-1">
-            </div>
-        })
-    } else {
-        Either::Right(view! {
-            <p class=ITALIC_CLASS>
-                {move || t!(i18n, user_view_contact)}
-                {" "}
-                <a href="/sign-in" class="text-blue-500">{move || t!(i18n, sign_in)}</a>
-            </p>
-        })
-    }
-}
-
-#[component]
 pub fn UserProfilePage() -> impl IntoView {
     let i18n = use_i18n();
     let params = use_params_map();
     let username = move || params.read().get("username").unwrap_or_default();
-    let auth = use_auth();
 
     let data = Resource::new_blocking(
         move || username(),
@@ -224,10 +208,9 @@ pub fn UserProfilePage() -> impl IntoView {
                         </div>
                     })),
                     Ok(Some(user)) => {
-                        let is_signed_in = auth.is_some();
-                        let _username = user.username.clone();
                         let username = user.username.clone();
                         let created_at = user.created_at.clone();
+                        let updated_at = user.updated_at.clone();
                         let title = format!("{} – {}", username, site_title!(i18n));
                         let initial = user.username.chars().next().unwrap_or('?');
                         let intro_html = user.introduction_html.clone();
@@ -237,18 +220,16 @@ pub fn UserProfilePage() -> impl IntoView {
                             <Title text=title/>
 
                             <div class="card p-6 mb-6">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 font-bold text-2xl shrink-0">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 font-bold text-2xl shrink-0 mt-1">
                                         {initial.to_string()}
                                     </div>
-                                    <div>
-                                        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">{username.clone()}</h1>
-                                        <p class="text-sm text-gray-500">@ {username.clone()}</p>
+                                    <div class="min-w-0 flex-1">
+                                        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{username.clone()}</h1>
                                         <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {created_at}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, profile_updated)} {updated_at}</p>
                                     </div>
                                 </div>
-
-                                <ContactSection is_signed_in=is_signed_in _user=user/>
                             </div>
 
                             <IntroSection intro_html=intro_html/>

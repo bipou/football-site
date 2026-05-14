@@ -76,14 +76,21 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
         let uid = common::id_only(&d.id);
         let keywords = topic_db::get_keywords_by_user_id(&uid)
             .await
-            .unwrap_or_default();
+            .unwrap_or_else(|e| {
+                leptos::logging::error!("get_keywords_by_user_id({uid}): {e}");
+                vec![]
+            });
         let topics = topic_db::get_topics_by_user_id(&uid)
             .await
-            .unwrap_or_default();
+            .unwrap_or_else(|e| {
+                leptos::logging::error!("get_topics_by_user_id({uid}): {e}");
+                vec![]
+            });
         items.push(UserSummary {
             id: uid,
             username: d.username,
-            created_at: common::ymdhmsz8(&d.created_at),
+            created_at: common::ymd8(&d.created_at),
+            updated_at: common::ymd8(&d.updated_at),
             status: d.status,
             keywords,
             topics,
@@ -113,10 +120,16 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
     let uid = common::id_only(&d.id);
     let keywords = topic_db::get_keywords_by_user_id(&uid)
         .await
-        .unwrap_or_default();
+        .unwrap_or_else(|e| {
+            leptos::logging::error!("get_keywords_by_user_id({uid}): {e}");
+            vec![]
+        });
     let topics = topic_db::get_topics_by_user_id(&uid)
         .await
-        .unwrap_or_default();
+        .unwrap_or_else(|e| {
+            leptos::logging::error!("get_topics_by_user_id({uid}): {e}");
+            vec![]
+        });
 
     Ok(Some(User {
         id: uid,
@@ -124,8 +137,8 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
         email: d.email,
         introduction_html: render_md(&d.introduction),
         introduction: d.introduction,
-        created_at: common::ymdhmsz8(&d.created_at),
-        updated_at: common::ymdhmsz8(&d.updated_at),
+        created_at: common::ymd8(&d.created_at),
+        updated_at: common::ymd8(&d.updated_at),
         status: d.status,
         keywords,
         topics,

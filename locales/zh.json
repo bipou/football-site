@@ -68,7 +68,7 @@
   "register_confirm_password": "确认密码",
   "register_password_mismatch": "两次输入的密码不一致",
   "register_password_weak": "密码须包含大写字母、小写字母、数字",
-  "register_topics": "关键词",
+  "register_topics": "我的标签",
   "register_intro": "简介",
   "register_have_account": "已有账户？",
   "register_go_sign_in": "去签入",
@@ -77,10 +77,10 @@
 
   "users_list": "球迷列表",
   "registration_time": "注册时间：",
+  "profile_updated": "资料更新：",
   "features_keys_tags": "特点关键词/标签：",
   "related_keys_tags": "涉猎关键词/标签：",
   "user_intro_label": "用户简介",
-  "user_view_contact": "签入后可查看联系信息",
   "user_risk_warn": "本网站仅提供用户信息聚合，不负任何法律责任。",
 
   "user_activate": "账户激活",

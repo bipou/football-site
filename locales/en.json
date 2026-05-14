@@ -68,7 +68,7 @@
   "register_confirm_password": "Confirm password",
   "register_password_mismatch": "Passwords do not match",
   "register_password_weak": "Password must contain uppercase, lowercase, and digits",
-  "register_topics": "Keywords",
+  "register_topics": "My Tags",
   "register_intro": "Introduction",
   "register_have_account": "Have an account?",
   "register_go_sign_in": "Sign in",
@@ -77,10 +77,10 @@
 
   "users_list": "Fans List",
   "registration_time": "Registered:",
+  "profile_updated": "Updated:",
   "features_keys_tags": "Feature tags:",
   "related_keys_tags": "Related tags:",
   "user_intro_label": "Introduction",
-  "user_view_contact": "Sign in to view contact details",
   "user_risk_warn": "This site aggregates user info only. Identify risks yourself.",
 
   "user_activate": "Account Activation",
