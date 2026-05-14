@@ -299,15 +299,14 @@ pub async fn get_footballs_by_category(
 }
 
 pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<FootballsResult, String> {
-    let tid = common::record_id("topics", topic_id);
     let ps = constant::config().page_size;
 
     // Fetch distinct football_ids linked to this topic
-    let mut rel_res = get_db()
-        .query("SELECT VALUE football_id FROM topics_rel WHERE topic_id = $tid AND football_id IS NOT NONE")
-        .bind(("tid", tid))
-        .await
-        .map_err(|e| e.to_string())?;
+    let q = format!(
+        "SELECT VALUE football_id FROM topics_rel WHERE topic_id = '{}' AND football_id IS NOT NONE",
+        topic_id
+    );
+    let mut rel_res = get_db().query(&q).await.map_err(|e| e.to_string())?;
     let raw_ids: Vec<String> = rel_res.take(0).map_err(|e| e.to_string())?;
 
     // Deduplicate

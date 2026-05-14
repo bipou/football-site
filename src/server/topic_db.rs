@@ -51,12 +51,9 @@ pub async fn get_topic_by_id(id: &str) -> Result<Option<Topic>, String> {
 }
 
 pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, String> {
-    let fid = common::record_id("footballs", football_id);
-
-    // Collect distinct topic_id values where football_id is set
     let q = format!(
-        "SELECT topic_id FROM topics_rel WHERE football_id = {} AND football_id IS NOT NONE",
-        fid
+        "SELECT topic_id FROM topics_rel WHERE football_id = '{}' AND football_id IS NOT NONE",
+        football_id
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
     let rels: Vec<RelTopicId> = res.take(0).map_err(|e| e.to_string())?;
@@ -190,12 +187,9 @@ pub async fn create_topics_from_names(names: &str) -> Result<Vec<String>, String
 
 pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Result<(), String> {
     for tid in &topic_ids {
-        let tid_full = common::record_id("topics", tid);
-
-        // Check if relation already exists (football_id IS NONE for user keywords)
         let check_sql = format!(
-            "SELECT id FROM topics_rel WHERE user_id = '{}' AND topic_id = {} AND football_id IS NONE",
-            user_id, tid_full
+            "SELECT id FROM topics_rel WHERE user_id = '{}' AND topic_id = '{}' AND football_id IS NONE",
+            user_id, tid
         );
         let mut res = get_db()
             .query(&check_sql)
@@ -205,8 +199,8 @@ pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Resul
 
         if rels.is_empty() {
             let create_sql = format!(
-                "CREATE topics_rel CONTENT {{ user_id: '{}', topic_id: {} }}",
-                user_id, tid_full
+                "CREATE topics_rel CONTENT {{ user_id: '{}', topic_id: '{}' }}",
+                user_id, tid
             );
             get_db()
                 .query(&create_sql)
