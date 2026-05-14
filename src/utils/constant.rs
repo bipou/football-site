@@ -27,6 +27,8 @@ pub const CARD_SECTION: &str = "card p-6 mb-6";
 pub const H1: &str = "text-xl font-bold text-gray-800 dark:text-gray-100 mb-6";
 pub const SECTION_H2: &str = "text-base font-semibold text-gray-700 dark:text-gray-200 mb-4";
 pub const FLEX_WRAP_GAP: &str = "flex flex-wrap gap-2";
+pub const ALERT_SUCCESS: &str = "text-green-500 text-sm mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-2";
+pub const ALERT_ERROR: &str = "text-red-500 text-sm mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2";
 
 // ── Nav link patterns ─────────────────────────────────────────────────────
 pub const NAV_LINK: &str = "text-gray-600 dark:text-gray-300 hover:text-blue-600 no-underline";

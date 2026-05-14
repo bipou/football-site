@@ -10,7 +10,8 @@ use crate::components::{Footer, Nav, Pagination};
 use crate::models::FootballsResult;
 
 use crate::utils::constant::{
-    EMPTY, GRID_2, H1, HOVER_SHADOW, HOVER_UNDERLINE, MAIN, NO_UNDERLINE,
+    ALERT_ERROR, ALERT_SUCCESS, EMPTY, GRID_2, H1, HOVER_SHADOW, HOVER_UNDERLINE, MAIN,
+    NO_UNDERLINE,
 };
 
 // ── Type aliases ─────────────────────────────────────────────────────────────
@@ -115,12 +116,12 @@ pub fn AdminFootballsPage() -> impl IntoView {
 
                     {move || update_action.value().get().map(|r| match r {
                         Ok(()) => Either::Left(view! {
-                            <p class="text-green-500 text-sm mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-2">
+                            <p class=ALERT_SUCCESS>
                                 "Status updated successfully."
                             </p>
                         }),
                         Err(e) => Either::Right(view! {
-                            <p class="text-red-500 text-sm mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
+                            <p class=ALERT_ERROR>
                                 {e.to_string()}
                             </p>
                         }),
