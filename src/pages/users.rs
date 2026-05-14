@@ -122,7 +122,7 @@ fn IntroSection(intro_html: String) -> impl IntoView {
         Either::Right(view! {
             <div class="card p-6 mb-6">
                 <h2 class="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">
-                    {move || t!(i18n, user_intro_label)}
+                    {move || t!(i18n, user_intro)}
                 </h2>
                 <article class=PROSE_CLASS inner_html=intro_html/>
             </div>
@@ -131,7 +131,7 @@ fn IntroSection(intro_html: String) -> impl IntoView {
 }
 
 #[component]
-fn KeywordsTags(
+fn KeywordsTopics(
     keywords: Vec<crate::models::Topic>,
     topics: Vec<crate::models::Topic>,
 ) -> impl IntoView {
@@ -144,7 +144,7 @@ fn KeywordsTags(
                 {if !keywords.is_empty() {
                     Either::Left(view! {
                         <div class="mb-4">
-                            <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_keys_tags)}</p>
+                            <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_topics)}</p>
                             <div class={FLEX_WRAP_GAP}>
                                 {keywords.iter().map(|t| {
                                     let url = format!("/footballs?topic={}", t.id);
@@ -161,7 +161,7 @@ fn KeywordsTags(
                 {if !topics.is_empty() {
                     Either::Left(view! {
                         <div>
-                            <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_keys_tags)}</p>
+                            <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_topics)}</p>
                             <div class={FLEX_WRAP_GAP}>
                                 {topics.iter().map(|t| {
                                     let url = format!("/footballs?topic={}", t.id);
@@ -233,10 +233,10 @@ pub fn UserProfilePage() -> impl IntoView {
                             </div>
 
                             <IntroSection intro_html=intro_html/>
-                            <KeywordsTags keywords=keywords topics=topics/>
+                            <KeywordsTopics keywords=keywords topics=topics/>
 
                             <p class=RISK_CLASS>
-                                {move || t!(i18n, user_risk_warn)}
+                                {move || t!(i18n, user_warn)}
                             </p>
                         }))
                     }
