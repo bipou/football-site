@@ -59,11 +59,23 @@ pub async fn register(
     username: String,
     email: String,
     password: String,
+    confirm_password: String,
     introduction: String,
     topics: String,
     lang: String,
 ) -> Result<(), ServerFnError> {
     use crate::server::{email as email_mod, user_db};
+
+    if password != confirm_password {
+        return Err(ServerFnError::new("register_password_mismatch"));
+    }
+
+    let has_upper = password.chars().any(|c| c.is_uppercase());
+    let has_lower = password.chars().any(|c| c.is_lowercase());
+    let has_digit = password.chars().any(|c| c.is_ascii_digit());
+    if !has_upper || !has_lower || !has_digit {
+        return Err(ServerFnError::new("register_password_weak"));
+    }
 
     let data = user_db::RegisterData {
         username,
@@ -260,7 +272,7 @@ pub fn RegisterPage() -> impl IntoView {
                                        class="form-input " autocomplete="new-password"/>
                             </div>
                             <div>
-                                <label class="form-label">{move || t!(i18n, register_password2)} " *"</label>
+                                <label class="form-label">{move || t!(i18n, register_confirm_password)} " *"</label>
                                 <input type="password" name="confirm_password" required
                                        class="form-input " autocomplete="new-password"/>
                             </div>
@@ -279,10 +291,16 @@ pub fn RegisterPage() -> impl IntoView {
                         </div>
 
                         {move || action.value().get().and_then(|r| r.err()).map(|e| {
-                            let msg = if e.to_string().contains("register_exist") {
-                                String::from("") /* was: t!(i18n, register_exist) */
-                            } else { e.to_string() };
-                            view! { <p class="text-red-500 text-sm text-center">{msg}</p> }
+                            let raw = e.to_string();
+                            if raw.contains("register_exist") {
+                                Either4::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_exist)}</p> })
+                            } else if raw.contains("register_password_mismatch") {
+                                Either4::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_mismatch)}</p> }))
+                            } else if raw.contains("register_password_weak") {
+                                Either4::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_weak)}</p> })))
+                            } else {
+                                Either4::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> })))
+                            }
                         })}
 
                         <button type="submit"

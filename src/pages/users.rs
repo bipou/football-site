@@ -255,7 +255,7 @@ pub fn UserProfilePage() -> impl IntoView {
                             <KeywordsTags keywords=keywords topics=topics/>
 
                             <p class=RISK_CLASS>
-                                {move || t!(i18n, user_risk_tip)}
+                                {move || t!(i18n, user_risk_warn)}
                             </p>
                         }))
                     }
