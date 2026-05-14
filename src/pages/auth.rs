@@ -249,7 +249,6 @@ pub fn RegisterPage() -> impl IntoView {
                 </Show>
 
                 <Show when=move || !success.get() fallback=|| ()>
-                    <div class="space-y-4">
                     <ActionForm action=action>
                         <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
                         <div class=GRID_2>
@@ -277,6 +276,7 @@ pub fn RegisterPage() -> impl IntoView {
                                        class="form-input " autocomplete="new-password"/>
                             </div>
                         </div>
+                        <div class="space-y-4">
                         <div>
                             <label class="form-label">{move || t!(i18n, register_topics)}</label>
                             <input type="text" name="topics"
@@ -292,7 +292,7 @@ pub fn RegisterPage() -> impl IntoView {
 
                         {move || action.value().get().and_then(|r| r.err()).map(|e| {
                             let raw = e.to_string();
-                            if raw.contains("register_exist") {
+                            let msg = if raw.contains("register_exist") {
                                 Either4::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_exist)}</p> })
                             } else if raw.contains("register_password_mismatch") {
                                 Either4::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_mismatch)}</p> }))
@@ -300,7 +300,8 @@ pub fn RegisterPage() -> impl IntoView {
                                 Either4::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_weak)}</p> })))
                             } else {
                                 Either4::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> })))
-                            }
+                            };
+                            view! { <div>{msg}</div> }
                         })}
 
                         <button type="submit"
@@ -308,8 +309,8 @@ pub fn RegisterPage() -> impl IntoView {
                                 class="btn-primary w-full justify-center">
                             {move || t!(i18n, register)}
                         </button>
+                        </div>
                     </ActionForm>
-                    </div>
 
                     <p class="mt-4 text-sm text-center text-gray-500">
                         {move || t!(i18n, register_have_account)} " "

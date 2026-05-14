@@ -304,7 +304,7 @@ pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<Footbal
 
     // Fetch distinct football_ids linked to this topic
     let mut rel_res = get_db()
-        .query("SELECT VALUE football_id FROM topics_relevant WHERE topic_id = $tid AND football_id IS NOT NONE")
+        .query("SELECT VALUE football_id FROM topics_rel WHERE topic_id = $tid AND football_id IS NOT NONE")
         .bind(("tid", tid))
         .await
         .map_err(|e| e.to_string())?;

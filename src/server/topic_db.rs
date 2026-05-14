@@ -55,7 +55,7 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 
     // Collect distinct topic_id values where football_id is set
     let q = format!(
-        "SELECT topic_id FROM topics_relevant WHERE football_id = {} AND football_id IS NOT NONE",
+        "SELECT topic_id FROM topics_rel WHERE football_id = {} AND football_id IS NOT NONE",
         fid
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
@@ -84,10 +84,10 @@ pub async fn get_topics_by_football_id(football_id: &str) -> Result<Vec<Topic>, 
 }
 
 pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> {
-    // user_id in topics_relevant may be stored as plain string (not RecordId),
+    // user_id in topics_rel may be stored as plain string (not RecordId),
     // so compare as string with quotes rather than RecordId literal.
     let q = format!(
-        "SELECT topic_id FROM topics_relevant WHERE user_id = '{}' AND football_id IS NONE",
+        "SELECT topic_id FROM topics_rel WHERE user_id = '{}' AND football_id IS NONE",
         user_id
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
@@ -118,7 +118,7 @@ pub async fn get_keywords_by_user_id(user_id: &str) -> Result<Vec<Topic>, String
 pub async fn get_topics_by_user_id(user_id: &str) -> Result<Vec<Topic>, String> {
     // Same as get_keywords_by_user_id: use string comparison for user_id
     let q = format!(
-        "SELECT topic_id FROM topics_relevant WHERE user_id = '{}'",
+        "SELECT topic_id FROM topics_rel WHERE user_id = '{}'",
         user_id
     );
     let mut res = get_db().query(&q).await.map_err(|e| e.to_string())?;
@@ -194,7 +194,7 @@ pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Resul
 
         // Check if relation already exists (football_id IS NONE for user keywords)
         let check_sql = format!(
-            "SELECT id FROM topics_relevant WHERE user_id = '{}' AND topic_id = {} AND football_id IS NONE",
+            "SELECT id FROM topics_rel WHERE user_id = '{}' AND topic_id = {} AND football_id IS NONE",
             user_id, tid_full
         );
         let mut res = get_db()
@@ -205,7 +205,7 @@ pub async fn link_topics_to_user(user_id: &str, topic_ids: Vec<String>) -> Resul
 
         if rels.is_empty() {
             let create_sql = format!(
-                "CREATE topics_relevant CONTENT {{ user_id: '{}', topic_id: {} }}",
+                "CREATE topics_rel CONTENT {{ user_id: '{}', topic_id: {} }}",
                 user_id, tid_full
             );
             get_db()
