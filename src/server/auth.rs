@@ -1,13 +1,13 @@
+use aws_lc_rs::{digest, pbkdf2};
 use base64::{Engine, engine::general_purpose::STANDARD};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode};
-use ring::pbkdf2;
 use serde::{Deserialize, Serialize};
 use std::num::NonZeroU32;
 
 use crate::utils::constant;
 
 static PBKDF2_ALG: pbkdf2::Algorithm = pbkdf2::PBKDF2_HMAC_SHA256;
-const CRED_LEN: usize = ring::digest::SHA256_OUTPUT_LEN;
+const CRED_LEN: usize = digest::SHA256_OUTPUT_LEN;
 const ITERATIONS: u32 = 100_000;
 
 const SALT_PREFIX: [u8; 16] = [

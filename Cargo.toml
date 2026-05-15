@@ -22,8 +22,8 @@ leptos_axum   = { version = "0.8",  optional = true }
 tokio         = { version = "1.52",  features = ["full"], optional = true }
 tower-http    = { version = "0.6",  features = ["fs"],   optional = true }
 surrealdb     = { version = "3.0",   optional = true }
-jsonwebtoken  = { version = "10.3", optional = true }
-ring          = { version = "0.17", optional = true }
+jsonwebtoken  = { version = "10.4", features = ["aws_lc_rs"], optional = true }
+aws-lc-rs     = { version = "1.17", optional = true }
 base64        = { version = "0.22", optional = true }
 lettre        = { version = "0.11", default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "builder"], optional = true }
 dotenvy       = { version = "0.15", optional = true }
@@ -50,7 +50,7 @@ ssr = [
     "dep:tower-http",
     "dep:surrealdb",
     "dep:jsonwebtoken",
-    "dep:ring",
+    "dep:aws-lc-rs",
     "dep:base64",
     "dep:chrono",
     "dep:lettre",
