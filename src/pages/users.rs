@@ -68,8 +68,8 @@ pub fn UsersPage() -> impl IntoView {
                         Either::Right(view! {
                             <div class={format!("{} mb-8", GRID_3)}>
                                 {d.items.into_iter().map(|u| {
-                                    let username = u.username.clone();
                                     let url = format!("/users/{}", u.username);
+                                    let uname = u.username.to_string();
                                     let initial = u.username.chars().next().unwrap_or('?');
                                     let updated = u.updated_at.clone();
                                     view! {
@@ -79,7 +79,7 @@ pub fn UsersPage() -> impl IntoView {
                                                     {initial.to_string()}
                                                 </div>
                                                 <div class="min-w-0 flex-1">
-                                                    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100 truncate">{username.clone()}</p>
+                                                    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100 truncate">{uname}</p>
                                                     <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, profile_updated)} {updated}</p>
                                                     {if !u.keywords.is_empty() {
                                                         Either::Left(view! {
@@ -208,10 +208,10 @@ pub fn UserProfilePage() -> impl IntoView {
                         </div>
                     })),
                     Ok(Some(user)) => {
-                        let username = user.username.clone();
                         let created_at = user.created_at.clone();
                         let updated_at = user.updated_at.clone();
-                        let title = format!("{} – {}", username, site_title!(i18n));
+                        let uname = user.username.to_string();
+                        let title = format!("{} – {}", uname, site_title!(i18n));
                         let initial = user.username.chars().next().unwrap_or('?');
                         let intro_html = user.introduction_html.clone();
                         let keywords = user.keywords.clone();
@@ -225,7 +225,7 @@ pub fn UserProfilePage() -> impl IntoView {
                                         {initial.to_string()}
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{username.clone()}</h1>
+                                        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">{uname}</h1>
                                         <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, registration_time)} {created_at}</p>
                                         <p class="text-xs text-gray-400 mt-1">{move || t!(i18n, profile_updated)} {updated_at}</p>
                                     </div>

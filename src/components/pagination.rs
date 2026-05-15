@@ -9,8 +9,8 @@ use leptos::prelude::*;
 #[component]
 pub fn Pagination(page_info: PageInfo, base_url: String) -> impl IntoView {
     let i18n = use_i18n();
-    let pi = page_info.clone();
-    let base = base_url.clone();
+    let pi = page_info;
+    let base = base_url;
 
     if pi.total_pages <= 1 {
         return Either::Left(view! { <div/> });

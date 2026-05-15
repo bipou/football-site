@@ -69,7 +69,7 @@ fn TopicInput() -> impl IntoView {
                 let t = t.clone();
                 view! {
                     <span class="badge-blue inline-flex items-center gap-1 text-xs">
-                        {t.clone()}
+                        {t}
                         <button type="button"
                             class="ml-0.5 text-blue-500 hover:text-red-500 font-bold leading-none cursor-pointer border-0 bg-transparent p-0 text-base"
                             on:click=move |ev| {

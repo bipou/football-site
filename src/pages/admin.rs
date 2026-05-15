@@ -135,12 +135,10 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                 Either3::Right(Either::<_, ()>::Left(view! {
                                     <div class="space-y-3 mb-8">
                                         {d.items.into_iter().map(|f| {
-                                            let fid = f.id.clone();
-                                            let fid2 = f.id.clone();
                                             view! {
                                                 <div class="card p-4 flex items-center gap-4 flex-wrap">
                                                     <div class="flex-1 min-w-0">
-                                                        <a href=format!("/footballs/{}", fid)
+                                                        <a href=format!("/footballs/{}", f.id.to_string())
                                                            class=format!("font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 {} text-sm", NO_UNDERLINE)>
                                                                {f.home_team.clone()} " vs " {f.away_team.clone()}
                                                         </a>
@@ -159,10 +157,10 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                                             (4, "status_both", "bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-300"),
                                                             (0, "status_hide", "bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"),
                                                         ].into_iter().map(|(s, key, cls)| {
-                                                            let fid3 = fid2.clone();
+                                                            let fid_val = f.id.to_string();
                                                             view! {
                                                                 <ActionForm action=update_action>
-                                                                    <input type="hidden" name="football_id" value=fid3.clone()/>
+                                                                    <input type="hidden" name="football_id" value=fid_val/>
                                                                     <input type="hidden" name="status" value=s.to_string()/>
                                                                     <button type="submit" class=format!("text-xs px-2 py-1 rounded transition-colors {cls}")>
                                                                         {move || match key {

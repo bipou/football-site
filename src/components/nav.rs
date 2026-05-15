@@ -159,7 +159,7 @@ fn AuthSection() -> impl IntoView {
         if let Some(user) = auth.clone() {
             Either::Left(view! {
                 <span class="text-gray-700 dark:text-gray-200 font-medium hidden sm:inline text-base">
-                    {user.username.clone()}
+                    {user.username}
                 </span>
                 <A href="/sign-out" attr:class=format!("text-sm text-gray-500 hover:text-red-500 {}", NO_UNDERLINE)>
                     {move || t!(i18n, sign_out)}
