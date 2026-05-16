@@ -1,4 +1,4 @@
-use crate::i18n::{t, t_string, use_i18n};
+use crate::i18n::{t, t_string, td_string, use_i18n};
 use crate::page_title;
 use leptos::either::Either;
 use leptos::html::Input;
@@ -96,8 +96,9 @@ fn TopicInput() -> impl IntoView {
     }
 }
 
-// ── Sign In server function ───────────────────────────────────────────────────
+// ── Server functions ──────────────────────────────────────────────────────────
 
+/// Sign in
 #[server]
 pub async fn sign_in(
     signature: String,
@@ -134,11 +135,11 @@ pub async fn sign_out() -> Result<(), ServerFnError> {
     use crate::server::auth as auth_mod;
     use axum::http::{HeaderValue, header};
 
+    let cookie = auth_mod::make_clear_cookie("fs_token");
     let resp = expect_context::<leptos_axum::ResponseOptions>();
     resp.insert_header(
         header::SET_COOKIE,
-        HeaderValue::from_str(&auth_mod::make_clear_cookie("fs_token"))
-            .map_err(|e| ServerFnError::new(e.to_string()))?,
+        HeaderValue::from_str(&cookie).map_err(|e| ServerFnError::new(e.to_string()))?,
     );
 
     leptos_axum::redirect("/");
@@ -158,7 +159,7 @@ pub async fn register(
     lang: String,
     captcha_token: String,
     captcha_answer: String,
-) -> Result<(), ServerFnError> {
+) -> Result<String, ServerFnError> {
     use crate::server::{captcha, email as email_mod, user_db};
     use crate::utils::common::{into_rid, record_key};
 
@@ -192,13 +193,14 @@ pub async fn register(
     let user_rid = into_rid(&user_id, "users");
     if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_rid).await {
         let kid = record_key(&user_id).to_string();
+        let uname = username.clone();
         // 邮件发送与注册解耦，避免 SMTP 阻塞响应
         tokio::spawn(async move {
-            let _ = email_mod::send_activation_email(&lang, &username, &kid, &email_addr).await;
+            let _ = email_mod::send_activation_email(&lang, &uname, &kid, &email_addr).await;
         });
     }
 
-    Ok(())
+    Ok(username)
 }
 
 // ── Activate / Resend server functions ────────────────────────────────────────
@@ -236,11 +238,13 @@ pub async fn get_captcha() -> Result<(String, String, u8), ServerFnError> {
     Ok((c.svg, c.token, c.answer))
 }
 
-// ── Captcha gate（页面加载即现，按钮灰色，答对恢复）─────────────────────────
+// ── Helper ────────────────────────────────────────────────────────────────────
 
 fn check_answer(input: &str, answer: u8) -> bool {
-    input.parse::<u8>().ok() == Some(answer)
+    input.trim().parse::<u8>().ok() == Some(answer)
 }
+
+// ── CaptchaGate component (Sign In) ────────────────────────────────────────────
 
 #[component]
 fn CaptchaGate(
@@ -567,9 +571,11 @@ pub fn RegisterPage() -> impl IntoView {
     let i18n = use_i18n();
     let action = ServerAction::<Register>::new();
     let (success, set_success) = signal(false);
+    let (reg_username, set_reg_username) = signal(String::new());
 
     Effect::new(move |_| {
-        if let Some(Ok(())) = action.value().get() {
+        if let Some(Ok(name)) = action.value().get() {
+            set_reg_username.set(name);
             set_success.set(true);
         }
     });
@@ -578,23 +584,18 @@ pub fn RegisterPage() -> impl IntoView {
         <Title text=move || page_title!(i18n, user_register)/>
         <Nav/>
         <main class="max-w-2xl mx-auto px-4 py-8">
-            <div class="card p-8">
+            // 表单卡片：relative 让弹框相对于此定位
+            <div class="card p-8 relative">
                 <h1 class=H1>
                     {move || t!(i18n, user_register)}
                 </h1>
 
-                <Show when=move || success.get() fallback=|| ()>
-                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6 text-center">
-                        <p class="text-green-700 dark:text-green-300 text-sm font-medium">
-                            {move || t!(i18n, register_success)}
-                        </p>
-                        <a href="/sign-in" class="btn-primary mt-4 inline-block">
-                            {move || t!(i18n, sign_in)}
-                        </a>
-                    </div>
-                </Show>
-
-                <Show when=move || !success.get() fallback=|| ()>
+                // 表单始终渲染，成功时模糊 + 禁止交互
+                <div style:opacity=move || if success.get() { "0.35" } else { "1" }
+                     style:filter=move || if success.get() { "blur(4px)" } else { "none" }
+                     style:pointer-events=move || if success.get() { "none" } else { "auto" }
+                     style:transition="all 0.3s"
+                >
                     <CaptchaGateRegister action=action>
                         <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
                         <div class=GRID_2>
@@ -636,11 +637,37 @@ pub fn RegisterPage() -> impl IntoView {
                         </div>
                         </div>
                     </CaptchaGateRegister>
+                </div>
 
-                    <p class="mt-4 text-sm text-center text-gray-500">
-                        {move || t!(i18n, register_have_account)} " "
-                        <a href="/sign-in" class=format!("text-blue-500 {}", HOVER_UNDERLINE)>{move || t!(i18n, register_go_sign_in)}</a>
-                    </p>
+                <p class="mt-4 text-sm text-center text-gray-500">
+                    {move || t!(i18n, register_have_account)} " "
+                    <a href="/sign-in" class=format!("text-blue-500 {}", HOVER_UNDERLINE)>{move || t!(i18n, register_go_sign_in)}</a>
+                </p>
+
+                // 成功弹框
+                <Show when=move || success.get() fallback=|| ()>
+                    <div class="modal-overlay">
+                        <div class="modal-card">
+                            <div class="modal-icon">"✓"</div>
+                            <p class="modal-text">
+                                <span class="modal-username">{move || reg_username.get()}</span>
+                                {move || {
+                                    let name = reg_username.get();
+                                    let full = td_string!(i18n.get_locale(), register_success, username = &name);
+                                    let comma = full.find('，').or_else(|| full.find(',')).unwrap_or(full.len());
+                                    full[comma..].to_string()
+                                }}
+                            </p>
+                            <div class="modal-actions">
+                                <a href="/sign-in" class="btn-primary modal-btn">
+                                    {move || t!(i18n, register_go_sign_in)}
+                                </a>
+                                <a href="/" class="modal-btn-primary">
+                                    {move || t!(i18n, go_home)}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </Show>
             </div>
         </main>
@@ -662,6 +689,13 @@ pub fn UserActivatePage() -> impl IntoView {
     );
 
     let resend_action = ServerAction::<ResendActivation>::new();
+    let (resent, set_resent) = signal(false);
+
+    Effect::new(move |_| {
+        if let Some(Ok(())) = resend_action.value().get() {
+            set_resent.set(true);
+        }
+    });
 
     view! {
         <Title text=move || page_title!(i18n, user_activate)/>
@@ -669,7 +703,7 @@ pub fn UserActivatePage() -> impl IntoView {
         <main class="min-h-[80vh] flex items-center justify-center px-4">
             <div class="card p-8 text-center max-w-md">
                 <Suspense fallback=move || view! { <p class="text-gray-400">{move || t!(i18n, loading)}</p> }>
-                    {move || activate_res.get().map(|result| match result {
+                    {move || activate_res.get().map(move |result| match result {
                         Err(e) => Either3::Left(view! {
                             <p class="text-red-500">{e.to_string()}</p>
                         }),
@@ -681,14 +715,18 @@ pub fn UserActivatePage() -> impl IntoView {
                             <a href="/sign-in" class="btn-primary">"Sign In →"</a>
                         })),
                         Ok(None) => Either3::Right(Either::Right(view! {
-                            <p class="text-red-500 mb-4">{move || t!(i18n, user_activate_problem)}</p>
-                            <ActionForm action=resend_action>
-                                <input type="hidden" name="user_id" value=user_id/>
-                                <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
-                                <button type="submit" class="btn-primary">
-                                    {move || t!(i18n, resend_activation)}
-                                </button>
-                            </ActionForm>
+                            <Show when=move || !resent.get() fallback=move || view! {
+                                <p class="text-green-600 font-semibold mb-4">{move || t!(i18n, user_re_activate)}</p>
+                            }>
+                                <p class="text-gray-500 mb-4">{move || t!(i18n, user_activate_problem)}</p>
+                                <ActionForm action=resend_action>
+                                    <input type="hidden" name="user_id" value=user_id/>
+                                    <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
+                                    <button type="submit" class="btn-primary">
+                                        {move || t!(i18n, resend_activation)}
+                                    </button>
+                                </ActionForm>
+                            </Show>
                         })),
                     })}
                 </Suspense>

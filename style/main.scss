@@ -163,6 +163,24 @@ input,button,textarea,select{font:inherit}
   .btn-secondary:hover{background:#4b5563}
 }
 
+// ── Modal 弹框 ────────────────────────────────────────────────────────────────
+.modal-overlay{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.55);border-radius:8px}
+.modal-card{background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12);text-align:center;padding:32px 24px;width:91.6%;max-width:28rem;margin:0 auto}
+.modal-icon{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:#ecfdf5;margin-bottom:20px;font-size:30px;color:#16a34a}
+.modal-text{color:#15803d;font-weight:500;line-height:1.7;font-size:15px;margin-bottom:8px;white-space:pre-line}
+.modal-username{font-weight:700;color:#166534}
+.modal-actions{display:flex;gap:12px;justify-content:center;margin-top:24px}
+.modal-btn{padding:10px 24px;font-size:14px;font-weight:500}
+.modal-btn-primary{display:inline-flex;align-items:center;justify-content:center;padding:10px 24px;border-radius:6px;font-size:14px;font-weight:500;background:#16a34a;color:#fff;text-decoration:none}
+@include dark {
+  .modal-overlay{background:rgba(0,0,0,.55)}
+  .modal-card{background:#1f2937;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+  .modal-icon{background:rgba(5,150,105,.2);color:#4ade80}
+  .modal-text{color:#4ade80}
+  .modal-username{color:#bbf7d0}
+  .modal-btn-primary{background:#22c55e}
+}
+
 // ── Cards ──────────────────────────────────────────────────────────────────────
 .card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 @include dark {.card{background:#1f2937;border-color:#374151}}

@@ -73,7 +73,7 @@
   "register_have_account": "Have an account?",
   "register_go_sign_in": "Sign in",
   "register_exist": "Username or Email already exists",
-  "register_success": "{{ username }}, congratulations, registration successful. \nPlease check your email to activate your account.",
+  "register_success": "{{ username }}, registration successful. \nPlease check your email to activate your account.",
 
   "captcha_label": "Security check",
   "captcha_placeholder": "Enter the result",
