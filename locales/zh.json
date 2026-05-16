@@ -69,7 +69,7 @@
   "register_password_mismatch": "两次输入的密码不一致",
   "register_password_weak": "密码须包含大写字母、小写字母、数字",
   "register_topics": "话题（用空格分隔）",
-  "register_intro": "简介",
+  "register_intro": "简介（支持 Markdown 语法）",
   "register_have_account": "已有账户？",
   "register_go_sign_in": "去签入",
   "register_exist": "用户名或邮箱已存在",

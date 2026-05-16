@@ -69,7 +69,7 @@
   "register_password_mismatch": "Passwords do not match",
   "register_password_weak": "Password must contain uppercase, lowercase, and digits",
   "register_topics": "Topics (separate with spaces)",
-  "register_intro": "Introduction",
+  "register_intro": "Introduction (supports Markdown syntax)",
   "register_have_account": "Have an account?",
   "register_go_sign_in": "Sign in",
   "register_exist": "Username or Email already exists",
