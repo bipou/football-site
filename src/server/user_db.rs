@@ -52,14 +52,14 @@ pub struct RegisterData {
 
 // ── public functions ─────────────────────────────────────────────────────
 
-/// Paginated list of active users (status >= 1), newest first.
+/// Paginated list of active users (status >= 0), newest first.
 pub async fn get_users(from: i64) -> Result<UsersResult, String> {
     let ps = constant::config().page_size;
     let skip = ((from - 1) * ps).max(0);
 
     // total count
     let mut resp = get_db()
-        .query("SELECT count() FROM users WHERE status >= 1 GROUP ALL")
+        .query("SELECT count() FROM users WHERE status >= 0 GROUP ALL")
         .await
         .map_err(|e| e.to_string())?;
     let counts: Vec<CountResult> = resp.take(0).map_err(|e| e.to_string())?;
@@ -68,7 +68,7 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
     // page of docs
     let mut resp = get_db()
         .query(
-            "SELECT * FROM users WHERE status >= 1 ORDER BY created_at DESC LIMIT $ps START $skip",
+            "SELECT * FROM users WHERE status >= 0 ORDER BY created_at DESC LIMIT $ps START $skip",
         )
         .bind(("ps", ps))
         .bind(("skip", skip))
