@@ -245,12 +245,22 @@ fn CaptchaGate(
 ) -> impl IntoView {
     let i18n = use_i18n();
     let (show_captcha, set_show_captcha) = signal(false);
+    let answer_ref = NodeRef::<Input>::new();
     let captcha_res = Resource::new(
         move || show_captcha.get(),
         |show| async move {
             if show { get_captcha().await.ok() } else { None }
         },
     );
+
+    // 验证码出现时自动聚焦输入框
+    Effect::new(move |_| {
+        if show_captcha.get() {
+            if let Some(el) = answer_ref.get() {
+                let _ = el.focus();
+            }
+        }
+    });
 
     let svg = move || {
         captcha_res
@@ -266,61 +276,68 @@ fn CaptchaGate(
             .map(|(_, t)| t)
             .unwrap_or_default()
     };
+    let btn_label = move || t!(i18n, sign_in);
 
     view! {
         <ActionForm action=action>
             {children()}
 
-            // 未触发验证码 → 显示触发按钮
-            <Show when=move || !show_captcha.get()>
-                <button
-                    type="button"
-                    class="btn-primary w-full justify-center"
-                    on:click=move |_| set_show_captcha.set(true)
-                >
-                    {move || t!(i18n, sign_in)}
-                </button>
-            </Show>
-
-            // 已触发验证码 → 显示验证码 + 提交按钮
-            <Show when=move || show_captcha.get()>
-                <div class="space-y-3 border-t pt-4 mt-4">
-                    <label class="form-label">
-                        {move || t!(i18n, captcha_label)}
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <div
-                            class="border rounded overflow-hidden cursor-pointer shrink-0"
-                            style="width:200px;height:70px"
-                            inner_html=svg
-                            on:click=move |_| captcha_res.refetch()
+            {move || if show_captcha.get() {
+                Either::Right(view! {
+                    <div class="space-y-3 border-t pt-4 mt-4">
+                        <label class="form-label">{move || t!(i18n, captcha_label)}</label>
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="border rounded overflow-hidden cursor-pointer shrink-0"
+                                style="width:200px;height:55px"
+                                inner_html=svg
+                                on:click=move |_| captcha_res.refetch()
+                            />
+                            <button
+                                type="button"
+                                class="text-xs text-gray-400 hover:text-blue-500 shrink-0"
+                                on:click=move |_| captcha_res.refetch()
+                            >
+                                "↻"
+                            </button>
+                        </div>
+                        <input
+                            type="text"
+                            name="captcha_answer"
+                            required
+                            node_ref=answer_ref
+                            placeholder="?"
+                            class="form-input"
                         />
-                        <button
-                            type="button"
-                            class="text-xs text-gray-400 hover:text-blue-500 shrink-0"
-                            on:click=move |_| captcha_res.refetch()
-                        >
-                            "↻"
-                        </button>
+                        <input type="hidden" name="captcha_token" value=token />
                     </div>
-                    <input
-                        type="text"
-                        name="captcha_answer"
-                        required
-                        placeholder="?"
-                        class="form-input"
-                    />
-                    <input type="hidden" name="captcha_token" value=token />
+                })
+            } else {
+                Either::Left(())
+            }}
+
+            {move || if show_captcha.get() {
+                Either::Right(view! {
                     <button
                         type="submit"
                         disabled=move || action.pending().get()
                         class="btn-primary w-full justify-center"
                     >
                         {move || if action.pending().get() { "Signing in..." } else { "" }}
-                        {move || t!(i18n, sign_in)}
+                        {btn_label}
                     </button>
-                </div>
-            </Show>
+                })
+            } else {
+                Either::Left(view! {
+                    <button
+                        type="button"
+                        class="btn-primary w-full justify-center"
+                        on:click=move |_| set_show_captcha.set(true)
+                    >
+                        {btn_label}
+                    </button>
+                })
+            }}
 
             // Error
             {move || action.value().get().and_then(|r| r.err()).map(|e| {
@@ -424,12 +441,22 @@ fn CaptchaGateRegister(
 ) -> impl IntoView {
     let i18n = use_i18n();
     let (show_captcha, set_show_captcha) = signal(false);
+    let answer_ref = NodeRef::<Input>::new();
     let captcha_res = Resource::new(
         move || show_captcha.get(),
         |show| async move {
             if show { get_captcha().await.ok() } else { None }
         },
     );
+
+    // 验证码出现时自动聚焦输入框
+    Effect::new(move |_| {
+        if show_captcha.get() {
+            if let Some(el) = answer_ref.get() {
+                let _ = el.focus();
+            }
+        }
+    });
 
     let svg = move || {
         captcha_res
@@ -445,58 +472,69 @@ fn CaptchaGateRegister(
             .map(|(_, t)| t)
             .unwrap_or_default()
     };
+    let btn_label = move || t!(i18n, register);
 
     view! {
         <ActionForm action=action>
             {children()}
 
-            <Show when=move || !show_captcha.get()>
-                <button
-                    type="button"
-                    class="btn-primary w-full justify-center"
-                    on:click=move |_| set_show_captcha.set(true)
-                >
-                    {move || t!(i18n, register)}
-                </button>
-            </Show>
-
-            <Show when=move || show_captcha.get()>
-                <div class="space-y-3 border-t pt-4 mt-4">
-                    <label class="form-label">
-                        {move || t!(i18n, captcha_label)}
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <div
-                            class="border rounded overflow-hidden cursor-pointer shrink-0"
-                            style="width:200px;height:70px"
-                            inner_html=svg
-                            on:click=move |_| captcha_res.refetch()
+            {move || if show_captcha.get() {
+                Either::Right(view! {
+                    <div class="space-y-3 border-t pt-4 mt-4">
+                        <label class="form-label">
+                            {move || t!(i18n, captcha_label)}
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="border rounded overflow-hidden cursor-pointer shrink-0"
+                                style="width:200px;height:55px"
+                                inner_html=svg
+                                on:click=move |_| captcha_res.refetch()
+                            />
+                            <button
+                                type="button"
+                                class="text-xs text-gray-400 hover:text-blue-500 shrink-0"
+                                on:click=move |_| captcha_res.refetch()
+                            >
+                                "↻"
+                            </button>
+                        </div>
+                        <input
+                            type="text"
+                            name="captcha_answer"
+                            required
+                            node_ref=answer_ref
+                            placeholder="?"
+                            class="form-input"
                         />
-                        <button
-                            type="button"
-                            class="text-xs text-gray-400 hover:text-blue-500 shrink-0"
-                            on:click=move |_| captcha_res.refetch()
-                        >
-                            "↻"
-                        </button>
+                        <input type="hidden" name="captcha_token" value=token />
                     </div>
-                    <input
-                        type="text"
-                        name="captcha_answer"
-                        required
-                        placeholder="?"
-                        class="form-input"
-                    />
-                    <input type="hidden" name="captcha_token" value=token />
+                })
+            } else {
+                Either::Left(())
+            }}
+
+            {move || if show_captcha.get() {
+                Either::Right(view! {
                     <button
                         type="submit"
                         disabled=move || action.pending().get()
                         class="btn-primary w-full justify-center"
                     >
-                        {move || t!(i18n, register)}
+                        {btn_label}
                     </button>
-                </div>
-            </Show>
+                })
+            } else {
+                Either::Left(view! {
+                    <button
+                        type="button"
+                        class="btn-primary w-full justify-center"
+                        on:click=move |_| set_show_captcha.set(true)
+                    >
+                        {btn_label}
+                    </button>
+                })
+            }}
 
             {move || action.value().get().and_then(|r| r.err()).map(|e| {
                 let raw = e.to_string();
@@ -584,7 +622,10 @@ pub fn RegisterPage() -> impl IntoView {
                             <TopicInput/>
                         </div>
                         <div>
-                            <label class="form-label">{move || t!(i18n, register_intro)}</label>
+                            <label class="form-label">
+                                {move || t!(i18n, register_intro)}
+                                <span class="text-xs text-gray-400 ml-1">{move || t!(i18n, register_intro)}</span>
+                            </label>
                             <textarea name="introduction" rows="4"
                                       placeholder=move || String::from("")
                                       class="form-input "/>
