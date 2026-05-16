@@ -1,4 +1,4 @@
-use crate::utils::common::{rid_str, into_rid};
+use crate::utils::common::{into_rid, rid_str};
 use serde::Deserialize;
 use surrealdb::types::{RecordId, SurrealValue};
 
@@ -44,7 +44,9 @@ pub async fn get_topic_by_id(rid: &RecordId) -> Result<Option<Topic>, String> {
 
 pub async fn get_topics_by_football_id(football_rid: &RecordId) -> Result<Vec<Topic>, String> {
     let mut res = get_db()
-        .query("SELECT topic_id FROM topics_rel WHERE football_id = $fid AND football_id IS NOT NONE")
+        .query(
+            "SELECT topic_id FROM topics_rel WHERE football_id = $fid AND football_id IS NOT NONE",
+        )
         .bind(("fid", football_rid.clone()))
         .await
         .map_err(|e| e.to_string())?;
