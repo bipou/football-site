@@ -32,10 +32,10 @@ fn gen_bool() -> bool {
 
 // ── Captcha 数据结构 ──────────────────────────────────────────────────────────
 
-#[derive(Clone)]
 pub struct Captcha {
-    pub svg: String,  // SVG 标记文本
+    pub svg: String,   // SVG 标记文本
     pub token: String, // HMAC 签名令牌
+    pub answer: u8,    // 明文答案（客户端预校验用）
 }
 
 struct Payload {
@@ -46,7 +46,10 @@ struct Payload {
 // ── 令牌签名 ──────────────────────────────────────────────────────────────────
 
 fn sign_payload(p: &Payload) -> String {
-    let hmac_key = Key::new(aws_lc_rs::hmac::HMAC_SHA256, constant::config().site_key.as_bytes());
+    let hmac_key = Key::new(
+        aws_lc_rs::hmac::HMAC_SHA256,
+        constant::config().site_key.as_bytes(),
+    );
     let msg = format!("{}:{}", p.answer, p.exp);
     let sig = sign(&hmac_key, msg.as_bytes());
     let sig_b64 = URL_SAFE_NO_PAD.encode(sig.as_ref());
@@ -71,7 +74,10 @@ pub fn verify_token(token: &str, user_answer: &str) -> Option<u8> {
     let user_ans: u8 = user_answer.parse().ok()?;
 
     // 验证 HMAC
-    let hmac_key = Key::new(aws_lc_rs::hmac::HMAC_SHA256, constant::config().site_key.as_bytes());
+    let hmac_key = Key::new(
+        aws_lc_rs::hmac::HMAC_SHA256,
+        constant::config().site_key.as_bytes(),
+    );
     let msg = format!("{}:{}", user_ans, exp);
     let expected_sig = URL_SAFE_NO_PAD.encode(sign(&hmac_key, msg.as_bytes()).as_ref());
 
@@ -111,19 +117,19 @@ pub fn generate_captcha() -> Captcha {
         + CAPTCHA_EXPIRY;
     let token = sign_payload(&Payload { answer, exp });
 
-    Captcha { svg, token }
+    Captcha { svg, token, answer }
 }
 
 fn render_svg(left: u8, right: u8, op: char) -> String {
-    let w: f64 = 200.0;
-    let h: f64 = 55.0;
-    let cy: f64 = 33.0;
-    let base_size = 20.0;
+    let w: f64 = 160.0;
+    let h: f64 = 40.0;
+    let cy: f64 = 26.0;
+    let base_size = 16.0;
 
     // 随机字符间距 (不均匀，防 OCR 切割)
-    let cx1 = 35.0 + gen_range_f64(-6.0, 6.0);
-    let cx2 = 82.0 + gen_range_f64(-6.0, 6.0);
-    let cx3 = 128.0 + gen_range_f64(-6.0, 6.0);
+    let cx1 = 22.0 + gen_range_f64(-4.0, 4.0);
+    let cx2 = 58.0 + gen_range_f64(-4.0, 4.0);
+    let cx3 = 92.0 + gen_range_f64(-4.0, 4.0);
 
     // 每个字符不同字号
     let s1 = base_size + gen_range_f64(-3.0, 3.0);
@@ -142,8 +148,18 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
 
     // 随机颜色
     let hue = gen_range_i32(200, 260);
-    let color1 = format!("hsl({}, {}%, {}%)", hue, gen_range_i32(45, 65), gen_range_i32(25, 40));
-    let color2 = format!("hsl({}, {}%, {}%)", gen_range_i32(200, 260), gen_range_i32(45, 65), gen_range_i32(25, 40));
+    let color1 = format!(
+        "hsl({}, {}%, {}%)",
+        hue,
+        gen_range_i32(45, 65),
+        gen_range_i32(25, 40)
+    );
+    let color2 = format!(
+        "hsl({}, {}%, {}%)",
+        gen_range_i32(200, 260),
+        gen_range_i32(45, 65),
+        gen_range_i32(25, 40)
+    );
 
     let mut svg = String::new();
     svg.push_str(&format!(
@@ -152,14 +168,13 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
 
     // 背景
     let bg1 = "fafbfc";
-    let bg2 = "dee2e6";
     svg.push_str(&format!(
-        "<rect width=\"{w}\" height=\"{h}\" rx=\"4\" fill=\"#{bg1}\" stroke=\"#{bg2}\" stroke-width=\"1\"/>"
+        "<rect width=\"{w}\" height=\"{h}\" rx=\"4\" fill=\"#{bg1}\"/>"
     ));
 
     // 背景网格线（干扰 OCR 分割）
-    for i in 1..4 {
-        let gx = i as f64 * 50.0;
+    for i in 1..3 {
+        let gx = i as f64 * 53.0;
         svg.push_str(&format!(
             "<line x1=\"{gx}\" y1=\"2\" x2=\"{gx}\" y2=\"{h}\" stroke=\"#e9ecef\" stroke-width=\"0.5\"/>"
         ));
@@ -189,11 +204,11 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
     }
 
     // 伪随机背景数字（干扰 OCR 字符识别）
-    for _ in 0..6 {
+    for _ in 0..4 {
         let fake_digit = gen_range_i32(0, 9);
-        let fx = gen_range_f64(10.0, w - 10.0);
-        let fy = gen_range_f64(10.0, h - 8.0);
-        let fs = gen_range_f64(8.0, 13.0);
+        let fx = gen_range_f64(8.0, w - 8.0);
+        let fy = gen_range_f64(8.0, h - 6.0);
+        let fs = gen_range_f64(6.0, 10.0);
         let fr = gen_range_f64(-30.0, 30.0);
         svg.push_str(&format!(
             "<text x=\"{fx}\" y=\"{fy}\" font-size=\"{fs}\" font-family=\"Courier,monospace\" fill=\"#ced4da\" text-anchor=\"middle\" transform=\"rotate({fr} {fx} {fy})\">{fake_digit}</text>"
@@ -216,9 +231,9 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
         "<text x=\"{cx3}\" y=\"{cy}\" dy=\"{dy3}\" font-size=\"{s3}\" font-family=\"Courier,monospace\" font-weight=\"bold\" fill=\"{color2}\" text-anchor=\"middle\" transform=\"rotate({rot3} {cx3} {cy})\">{right}</text>"
     ));
 
-    // 问号
+    // 等号（明显，直连回答框）
     svg.push_str(&format!(
-        "<text x=\"178\" y=\"{cy}\" font-size=\"{base_size}\" font-family=\"Courier,monospace\" fill=\"#868e96\" text-anchor=\"middle\" opacity=\"0.5\">= ?</text>"
+        "<text x=\"130\" y=\"{cy}\" font-size=\"{base_size}\" font-family=\"Courier,monospace\" font-weight=\"bold\" fill=\"#495057\" text-anchor=\"middle\">=</text>"
     ));
 
     svg.push_str("</svg>");
@@ -242,6 +257,20 @@ mod tests {
     }
 
     #[test]
+    fn test_answer_matches() {
+        let captcha = generate_captcha();
+        let ans = extract_answer_from_svg(&captcha.svg);
+        assert_eq!(captcha.answer, ans);
+    }
+
+    #[test]
+    fn test_answer_mismatch() {
+        let captcha = generate_captcha();
+        let ans = extract_answer_from_svg(&captcha.svg);
+        assert_ne!(captcha.answer.wrapping_add(1), ans);
+    }
+
+    #[test]
     fn test_wrong_answer() {
         let captcha = generate_captcha();
         let ans = extract_answer_from_svg(&captcha.svg);
@@ -252,8 +281,7 @@ mod tests {
 
     #[test]
     fn test_expired_token() {
-        // 模拟过期 token
-        let token = "1000000000:fake";  // 1970 年代，肯定过期
+        let token = "1000000000:fake";
         let result = verify_token(token, "42");
         assert!(result.is_none());
     }
@@ -281,7 +309,11 @@ mod tests {
         match (nums.len(), has_plus, has_minus) {
             (2, true, false) => nums[0] + nums[1],
             (2, false, true) => {
-                if nums[0] >= nums[1] { nums[0] - nums[1] } else { nums[1] - nums[0] }
+                if nums[0] >= nums[1] {
+                    nums[0] - nums[1]
+                } else {
+                    nums[1] - nums[0]
+                }
             }
             _ => 0,
         }

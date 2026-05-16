@@ -1,4 +1,4 @@
-use crate::i18n::{t, use_i18n};
+use crate::i18n::{t, t_string, use_i18n};
 use crate::page_title;
 use leptos::either::Either;
 use leptos::html::Input;
@@ -11,7 +11,6 @@ use crate::utils::constant::{GRID_2, H1, HOVER_UNDERLINE, TEXT_SUBTLE};
 
 // ── Type alias ───────────────────────────────────────────────────────────
 type Either5<A, B, C, D, E> = Either<A, Either<B, Either<C, Either<D, E>>>>;
-type Either4<A, B, C, D> = Either<A, Either<B, Either<C, D>>>;
 type Either3<A, B, C> = Either<A, Either<B, C>>;
 
 // ── Topic input component ────────────────────────────────────────────────
@@ -108,7 +107,6 @@ pub async fn sign_in(
     use crate::server::{auth as auth_mod, captcha, user_db};
     use axum::http::{HeaderValue, header};
 
-    // 验证码校验
     if captcha::verify_token(&captcha_token, &captcha_answer).is_none() {
         return Err(ServerFnError::new("captcha_invalid"));
     }
@@ -163,7 +161,6 @@ pub async fn register(
     use crate::server::{captcha, email as email_mod, user_db};
     use crate::utils::common::{into_rid, record_key};
 
-    // 验证码校验
     if captcha::verify_token(&captcha_token, &captcha_answer).is_none() {
         return Err(ServerFnError::new("captcha_invalid"));
     }
@@ -191,7 +188,6 @@ pub async fn register(
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
-    // Send activation email (non-fatal)
     let user_rid = into_rid(&user_id, "users");
     if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_rid).await {
         let kid = record_key(&user_id);
@@ -230,129 +226,211 @@ pub async fn resend_activation(user_id: String, lang: String) -> Result<(), Serv
 // ── Captcha server function ────────────────────────────────────────────────────
 
 #[server]
-pub async fn get_captcha() -> Result<(String, String), ServerFnError> {
+pub async fn get_captcha() -> Result<(String, String, u8), ServerFnError> {
     use crate::server::captcha;
-    let captcha = captcha::generate_captcha();
-    Ok((captcha.svg, captcha.token))
+    let c = captcha::generate_captcha();
+    Ok((c.svg, c.token, c.answer))
 }
 
-// ── Captcha widget ────────────────────────────────────────────────────────────
+// ── Captcha gate（页面加载即现，按钮灰色，答对恢复）─────────────────────────
+
+fn check_answer(input: &str, answer: u8) -> bool {
+    input.parse::<u8>().ok() == Some(answer)
+}
 
 #[component]
 fn CaptchaGate(
     children: Children,
+    button_label: Signal<String>,
+    pending_label: Signal<String>,
     action: ServerAction<SignIn>,
 ) -> impl IntoView {
     let i18n = use_i18n();
-    let (show_captcha, set_show_captcha) = signal(false);
+    let (captcha_ok, set_captcha_ok) = signal(false);
+    let (status_msg, set_status_msg) = signal(String::new());
     let answer_ref = NodeRef::<Input>::new();
-    let captcha_res = Resource::new(
-        move || show_captcha.get(),
-        |show| async move {
-            if show { get_captcha().await.ok() } else { None }
-        },
-    );
 
-    // 验证码出现时自动聚焦输入框
-    Effect::new(move |_| {
-        if show_captcha.get() {
-            if let Some(el) = answer_ref.get() {
-                let _ = el.focus();
-            }
-        }
-    });
+    let captcha_res = Resource::new(|| (), |_| async move { get_captcha().await.ok() });
 
     let svg = move || {
         captcha_res
             .get()
             .flatten()
-            .map(|(s, _)| s)
+            .map(|(s, _, _)| s)
             .unwrap_or_default()
     };
     let token = move || {
         captcha_res
             .get()
             .flatten()
-            .map(|(_, t)| t)
+            .map(|(_, t, _)| t)
             .unwrap_or_default()
     };
-    let btn_label = move || t!(i18n, sign_in);
+    let answer = move || captcha_res.get().flatten().map(|(_, _, a)| a).unwrap_or(0);
+
+    let on_input = move |ev: leptos::ev::Event| {
+        let val = event_target_value(&ev);
+        let ans = answer();
+        if val.is_empty() {
+            set_status_msg.set(String::new());
+            set_captcha_ok.set(false);
+        } else if check_answer(&val, ans) {
+            set_status_msg.set("✓".into());
+            set_captcha_ok.set(true);
+        } else {
+            set_status_msg.set("✗".into());
+            set_captcha_ok.set(false);
+        }
+    };
 
     view! {
         <ActionForm action=action>
             {children()}
 
-            {move || if show_captcha.get() {
-                Either::Right(view! {
-                    <div class="space-y-3 border-t pt-4 mt-4">
-                        <label class="form-label">{move || t!(i18n, captcha_label)}</label>
-                        <div class="flex items-center gap-2">
-                            <div
-                                class="border rounded overflow-hidden cursor-pointer shrink-0"
-                                style="width:200px;height:55px"
-                                inner_html=svg
-                                on:click=move |_| captcha_res.refetch()
-                            />
-                            <button
-                                type="button"
-                                class="text-xs text-gray-400 hover:text-blue-500 shrink-0"
-                                on:click=move |_| captcha_res.refetch()
-                            >
-                                "↻"
-                            </button>
-                        </div>
-                        <input
-                            type="text"
-                            name="captcha_answer"
-                            required
-                            node_ref=answer_ref
-                            placeholder="?"
-                            class="form-input"
-                        />
-                        <input type="hidden" name="captcha_token" value=token />
-                    </div>
-                })
-            } else {
-                Either::Left(())
-            }}
+            <div class="space-y-3 border-t pt-4 mt-4">
+                <label class="form-label">{move || t!(i18n, captcha_label)}</label>
+                <div class="flex items-center gap-2">
+                    <div class="rounded overflow-hidden cursor-pointer shrink-0" style="width:160px;height:40px;border:1px solid #d1d5db"
+                         inner_html=svg on:click=move |_| captcha_res.refetch() />
+                    <input type="text" name="captcha_answer" required node_ref=answer_ref
+                           placeholder="?" class="form-input w-16 text-center text-lg" on:input=on_input />
+                    <button type="button"
+                            class="text-blue-500 hover:text-blue-700 text-lg font-bold shrink-0 leading-none"
+                            title="换一个"
+                            on:click=move |_| { captcha_res.refetch(); set_captcha_ok.set(false); set_status_msg.set(String::new()); }>
+                        "↻"
+                    </button>
+                    <span class=move || if captcha_ok.get() { "text-green-500 font-bold text-sm" }
+                                         else if status_msg.get().is_empty() { "text-gray-300 text-sm" }
+                                         else { "text-red-400 text-sm" }>
+                        {move || status_msg.get()}
+                    </span>
+                </div>
+                <input type="hidden" name="captcha_token" value=token />
+            </div>
 
-            {move || if show_captcha.get() {
-                Either::Right(view! {
-                    <button
-                        type="submit"
-                        disabled=move || action.pending().get()
-                        class="btn-primary w-full justify-center"
-                    >
-                        {move || if action.pending().get() { "Signing in..." } else { "" }}
-                        {btn_label}
-                    </button>
-                })
-            } else {
-                Either::Left(view! {
-                    <button
-                        type="button"
-                        class="btn-primary w-full justify-center"
-                        on:click=move |_| set_show_captcha.set(true)
-                    >
-                        {btn_label}
-                    </button>
-                })
-            }}
+            <button type="submit"
+                disabled=move || !captcha_ok.get() || action.pending().get()
+                class=move || if captcha_ok.get() {
+                    "btn-primary w-full justify-center mt-4".to_string()
+                } else {
+                    "w-full justify-center bg-gray-300 text-gray-500 rounded-lg py-2 px-4 cursor-not-allowed mt-4".to_string()
+                }
+            >
+                {move || if action.pending().get() { pending_label.get() } else { button_label.get() }}
+            </button>
 
             // Error
             {move || action.value().get().and_then(|r| r.err()).map(|e| {
-                let msg = move || if e.to_string().contains("captcha_invalid") {
-                    Either5::Left(t!(i18n, captcha_invalid))
-                } else if e.to_string().contains("sign_in_incorrect") {
-                    Either5::Right(Either::Left(t!(i18n, sign_in_incorrect)))
-                } else if e.to_string().contains("sign_in_not_activation") {
-                    Either5::Right(Either::Right(Either::Left(t!(i18n, sign_in_not_activation))))
-                } else if e.to_string().contains("sign_in_banned") {
-                    Either5::Right(Either::Right(Either::Right(Either::Left(t!(i18n, sign_in_banned)))))
+                let raw = e.to_string();
+                if raw.contains("captcha_invalid") {
+                    Either5::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, captcha_invalid)}</p> })
+                } else if raw.contains("sign_in_incorrect") || raw.contains("register_exist") {
+                    Either5::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_incorrect)}</p> }))
+                } else if raw.contains("sign_in_not_activation") || raw.contains("register_password_mismatch") {
+                    Either5::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_not_activation)}</p> })))
+                } else if raw.contains("sign_in_banned") || raw.contains("register_password_weak") {
+                    Either5::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_banned)}</p> }))))
                 } else {
-                    Either5::Right(Either::Right(Either::Right(Either::Right(t!(i18n, sign_in_security_problem)))))
-                };
-                view! { <p class="text-red-500 text-sm text-center">{msg}</p> }
+                    Either5::Right(Either::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> }))))
+                }
+            })}
+        </ActionForm>
+    }
+}
+
+#[component]
+fn CaptchaGateRegister(children: Children, action: ServerAction<Register>) -> impl IntoView {
+    let i18n = use_i18n();
+    let (captcha_ok, set_captcha_ok) = signal(false);
+    let (status_msg, set_status_msg) = signal(String::new());
+    let answer_ref = NodeRef::<Input>::new();
+    let btn = Signal::derive(move || t_string!(i18n, register).to_string());
+
+    let captcha_res = Resource::new(|| (), |_| async move { get_captcha().await.ok() });
+
+    let svg = move || {
+        captcha_res
+            .get()
+            .flatten()
+            .map(|(s, _, _)| s)
+            .unwrap_or_default()
+    };
+    let token = move || {
+        captcha_res
+            .get()
+            .flatten()
+            .map(|(_, t, _)| t)
+            .unwrap_or_default()
+    };
+    let answer = move || captcha_res.get().flatten().map(|(_, _, a)| a).unwrap_or(0);
+
+    let on_input = move |ev: leptos::ev::Event| {
+        let val = event_target_value(&ev);
+        let ans = answer();
+        if val.is_empty() {
+            set_status_msg.set(String::new());
+            set_captcha_ok.set(false);
+        } else if check_answer(&val, ans) {
+            set_status_msg.set("✓".into());
+            set_captcha_ok.set(true);
+        } else {
+            set_status_msg.set("✗".into());
+            set_captcha_ok.set(false);
+        }
+    };
+
+    view! {
+        <ActionForm action=action>
+            {children()}
+
+            <div class="space-y-3 border-t pt-4 mt-4">
+                <label class="form-label">{move || t!(i18n, captcha_label)}</label>
+                <div class="flex items-center gap-2">
+                    <div class="rounded overflow-hidden cursor-pointer shrink-0" style="width:160px;height:40px;border:1px solid #d1d5db"
+                         inner_html=svg on:click=move |_| captcha_res.refetch() />
+                    <input type="text" name="captcha_answer" required node_ref=answer_ref
+                           placeholder="?" class="form-input w-16 text-center text-lg" on:input=on_input />
+                    <button type="button"
+                            class="text-blue-500 hover:text-blue-700 text-lg font-bold shrink-0 leading-none"
+                            title="换一个"
+                            on:click=move |_| { captcha_res.refetch(); set_captcha_ok.set(false); set_status_msg.set(String::new()); }>
+                        "↻"
+                    </button>
+                    <span class=move || if captcha_ok.get() { "text-green-500 font-bold text-sm" }
+                                         else if status_msg.get().is_empty() { "text-gray-300 text-sm" }
+                                         else { "text-red-400 text-sm" }>
+                        {move || status_msg.get()}
+                    </span>
+                </div>
+                <input type="hidden" name="captcha_token" value=token />
+            </div>
+
+            <button type="submit"
+                disabled=move || !captcha_ok.get() || action.pending().get()
+                class=move || if captcha_ok.get() {
+                    "btn-primary w-full justify-center mt-4".to_string()
+                } else {
+                    "w-full justify-center bg-gray-300 text-gray-500 rounded-lg py-2 px-4 cursor-not-allowed mt-4".to_string()
+                }
+            >
+                {move || if action.pending().get() { btn.get() } else { btn.get() }}
+            </button>
+
+            // Error
+            {move || action.value().get().and_then(|r| r.err()).map(|e| {
+                let raw = e.to_string();
+                if raw.contains("captcha_invalid") {
+                    Either5::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, captcha_invalid)}</p> })
+                } else if raw.contains("sign_in_incorrect") || raw.contains("register_exist") {
+                    Either5::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_incorrect)}</p> }))
+                } else if raw.contains("sign_in_not_activation") || raw.contains("register_password_mismatch") {
+                    Either5::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_not_activation)}</p> })))
+                } else if raw.contains("sign_in_banned") || raw.contains("register_password_weak") {
+                    Either5::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_banned)}</p> }))))
+                } else {
+                    Either5::Right(Either::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> }))))
+                }
             })}
         </ActionForm>
     }
@@ -372,6 +450,9 @@ pub fn SignInPage() -> impl IntoView {
         }
     });
 
+    let btn = Signal::derive(move || t_string!(i18n, sign_in).to_string());
+    let pending = Signal::derive(move || "Signing in...".to_string());
+
     view! {
         <Title text=move || page_title!(i18n, user_sign_in)/>
         <Nav/>
@@ -382,17 +463,15 @@ pub fn SignInPage() -> impl IntoView {
                 </h1>
 
                 <div class="space-y-4">
-                    <CaptchaGate action=action>
+                    <CaptchaGate button_label=btn pending_label=pending action=action>
                         <div>
                             <label class="form-label">{move || t!(i18n, sign_in_account)}</label>
                             <input type="text" name="signature" required
-                                   placeholder=move || String::from("")
                                    class="form-input " autocomplete="username"/>
                         </div>
                         <div>
                             <label class="form-label">{move || t!(i18n, sign_in_password)}</label>
                             <input type="password" name="password" required
-                                   placeholder=move || String::from("")
                                    class="form-input " autocomplete="current-password"/>
                         </div>
                     </CaptchaGate>
@@ -415,7 +494,6 @@ pub fn SignOutPage() -> impl IntoView {
     let action = ServerAction::<SignOut>::new();
     let navigate = leptos_router::hooks::use_navigate();
 
-    // Auto-trigger sign-out on mount
     Effect::new(move |_| {
         action.dispatch(SignOut {});
     });
@@ -429,129 +507,6 @@ pub fn SignOutPage() -> impl IntoView {
         <div class="min-h-screen flex items-center justify-center">
             <p class=format!("{} text-lg", TEXT_SUBTLE)>"Signing out..."</p>
         </div>
-    }
-}
-
-// ── Register captcha gate ────────────────────────────────────────────────────
-
-#[component]
-fn CaptchaGateRegister(
-    children: Children,
-    action: ServerAction<Register>,
-) -> impl IntoView {
-    let i18n = use_i18n();
-    let (show_captcha, set_show_captcha) = signal(false);
-    let answer_ref = NodeRef::<Input>::new();
-    let captcha_res = Resource::new(
-        move || show_captcha.get(),
-        |show| async move {
-            if show { get_captcha().await.ok() } else { None }
-        },
-    );
-
-    // 验证码出现时自动聚焦输入框
-    Effect::new(move |_| {
-        if show_captcha.get() {
-            if let Some(el) = answer_ref.get() {
-                let _ = el.focus();
-            }
-        }
-    });
-
-    let svg = move || {
-        captcha_res
-            .get()
-            .flatten()
-            .map(|(s, _)| s)
-            .unwrap_or_default()
-    };
-    let token = move || {
-        captcha_res
-            .get()
-            .flatten()
-            .map(|(_, t)| t)
-            .unwrap_or_default()
-    };
-    let btn_label = move || t!(i18n, register);
-
-    view! {
-        <ActionForm action=action>
-            {children()}
-
-            {move || if show_captcha.get() {
-                Either::Right(view! {
-                    <div class="space-y-3 border-t pt-4 mt-4">
-                        <label class="form-label">
-                            {move || t!(i18n, captcha_label)}
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <div
-                                class="border rounded overflow-hidden cursor-pointer shrink-0"
-                                style="width:200px;height:55px"
-                                inner_html=svg
-                                on:click=move |_| captcha_res.refetch()
-                            />
-                            <button
-                                type="button"
-                                class="text-xs text-gray-400 hover:text-blue-500 shrink-0"
-                                on:click=move |_| captcha_res.refetch()
-                            >
-                                "↻"
-                            </button>
-                        </div>
-                        <input
-                            type="text"
-                            name="captcha_answer"
-                            required
-                            node_ref=answer_ref
-                            placeholder="?"
-                            class="form-input"
-                        />
-                        <input type="hidden" name="captcha_token" value=token />
-                    </div>
-                })
-            } else {
-                Either::Left(())
-            }}
-
-            {move || if show_captcha.get() {
-                Either::Right(view! {
-                    <button
-                        type="submit"
-                        disabled=move || action.pending().get()
-                        class="btn-primary w-full justify-center"
-                    >
-                        {btn_label}
-                    </button>
-                })
-            } else {
-                Either::Left(view! {
-                    <button
-                        type="button"
-                        class="btn-primary w-full justify-center"
-                        on:click=move |_| set_show_captcha.set(true)
-                    >
-                        {btn_label}
-                    </button>
-                })
-            }}
-
-            {move || action.value().get().and_then(|r| r.err()).map(|e| {
-                let raw = e.to_string();
-                let msg = if raw.contains("captcha_invalid") {
-                    Either5::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, captcha_invalid)}</p> })
-                } else if raw.contains("register_exist") {
-                    Either5::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_exist)}</p> }))
-                } else if raw.contains("register_password_mismatch") {
-                    Either5::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_mismatch)}</p> })))
-                } else if raw.contains("register_password_weak") {
-                    Either5::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_weak)}</p> }))))
-                } else {
-                    Either5::Right(Either::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> }))))
-                };
-                view! { <div>{msg}</div> }
-            })}
-        </ActionForm>
     }
 }
 
@@ -596,19 +551,16 @@ pub fn RegisterPage() -> impl IntoView {
                             <div>
                                 <label class="form-label">{move || t!(i18n, register_username)} " *"</label>
                                 <input type="text" name="username" required
-                                       placeholder=move || String::from("") /* was: t!(i18n, register_username_tip) */
                                        class="form-input " pattern="[a-z0-9_-]+" autocomplete="username"/>
                             </div>
                             <div>
                                 <label class="form-label">{move || t!(i18n, register_email)} " *"</label>
                                 <input type="email" name="email" required
-                                       placeholder=move || String::from("") /* was: t!(i18n, register_email_tip) */
                                        class="form-input " autocomplete="email"/>
                             </div>
                             <div>
                                 <label class="form-label">{move || t!(i18n, register_password)} " *"</label>
                                 <input type="password" name="password" required
-                                       placeholder=move || String::from("") /* was: t!(i18n, register_password_tip) */
                                        class="form-input " autocomplete="new-password"/>
                             </div>
                             <div>
@@ -624,11 +576,13 @@ pub fn RegisterPage() -> impl IntoView {
                         <div>
                             <label class="form-label">
                                 {move || t!(i18n, register_intro)}
-                                <span class="text-xs text-gray-400 ml-1">{move || t!(i18n, register_intro)}</span>
+                                <span class="text-xs text-gray-400 ml-1">
+                                    {move || if i18n.get_locale().to_string() == "zh" { "（支持markdown语法）" } else { "(supports Markdown syntax)" }}
+                                </span>
                             </label>
-                            <textarea name="introduction" rows="4"
-                                      placeholder=move || String::from("")
-                                      class="form-input "/>
+                            <textarea name="introduction" rows="4" class="form-input">
+                                "## About Me \n我关注足球数据与计算。"
+                            </textarea>
                         </div>
                         </div>
                     </CaptchaGateRegister>
@@ -663,54 +617,31 @@ pub fn UserActivatePage() -> impl IntoView {
         <Title text=move || page_title!(i18n, user_activate)/>
         <Nav/>
         <main class="min-h-[80vh] flex items-center justify-center px-4">
-            <div class="card p-8 w-full max-w-md text-center">
-                <h1 class=H1>
-                    {move || t!(i18n, user_activate)}
-                </h1>
-                <Suspense fallback=|| view! { <p class="text-gray-400">"Activating..."</p> }>
+            <div class="card p-8 text-center max-w-md">
+                <Suspense fallback=move || view! { <p class="text-gray-400">{move || t!(i18n, loading)}</p> }>
                     {move || activate_res.get().map(|result| match result {
-                        Err(e) => Either3::Left(view! { <p class="text-red-500">{e.to_string()}</p> }),
-                        Ok(None) => Either3::Right(Either::Left(view! { <p class="text-gray-500">"User not found."</p> })),
-                        Ok(Some(username)) => Either3::Right(Either::Right(view! {
-                            <div class="space-y-4">
-                                <div class="text-5xl">"✅"</div>
-                                <p class="text-green-600 dark:text-green-400 font-semibold text-lg">
-                                    {username} " — " {move || t!(i18n, user_activated)}
-                                </p>
-                                <a href="/sign-in" class="btn-primary inline-block">
-                                    {move || t!(i18n, sign_in)}
-                                </a>
-                            </div>
+                        Err(e) => Either3::Left(view! {
+                            <p class="text-red-500">{e.to_string()}</p>
+                        }),
+                        Ok(Some(username)) => Either3::Right(Either::Left(view! {
+                            <h1 class="text-xl font-bold text-green-600 mb-4">
+                                {move || t!(i18n, user_activated)}
+                            </h1>
+                            <p class="text-gray-600 mb-4">{username}</p>
+                            <a href="/sign-in" class="btn-primary">"Sign In →"</a>
+                        })),
+                        Ok(None) => Either3::Right(Either::Right(view! {
+                            <p class="text-red-500 mb-4">{move || t!(i18n, user_activate_problem)}</p>
+                            <ActionForm action=resend_action>
+                                <input type="hidden" name="user_id" value=user_id/>
+                                <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
+                                <button type="submit" class="btn-primary">
+                                    {move || t!(i18n, resend_activation)}
+                                </button>
+                            </ActionForm>
                         })),
                     })}
                 </Suspense>
-
-                <div class="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
-                    <p class="text-sm text-gray-500 mb-3">{move || t!(i18n, resend_activation)}</p>
-                    <div class="space-y-3">
-                    <ActionForm action=resend_action>
-                        <input type="hidden" name="user_id" value=move || user_id()/>
-                        <input type="hidden" name="lang" value=move || i18n.get_locale().to_string()/>
-                        <button type="submit"
-                                disabled=move || resend_action.pending().get()
-                                class="btn-secondary w-full justify-center text-sm">
-                            {move || t!(i18n, resend_activation)}
-                        </button>
-                    </ActionForm>
-                    </div>
-                    {move || resend_action.value().get().map(|r| match r {
-                        Ok(()) => Either::Left(view! {
-                            <p class="text-green-500 text-sm mt-2">{move || t!(i18n, user_re_activate)}</p>
-                        }),
-                        Err(e) => Either::Right(view! {
-                            <p class="text-red-500 text-sm mt-2">{e.to_string()}</p>
-                        }),
-                    })}
-                </div>
-
-                <p class="text-xs text-gray-400 mt-6">
-                    {move || t!(i18n, user_activate_problem)}
-                </p>
             </div>
         </main>
         <Footer/>
