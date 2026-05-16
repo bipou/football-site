@@ -75,6 +75,10 @@
   "register_exist": "Username or Email already exists",
   "register_success": "Registration successful! Please check your email to activate your account.",
 
+  "captcha_label": "Security check",
+  "captcha_placeholder": "Enter the result",
+  "captcha_invalid": "Incorrect answer, please try again",
+
   "users_list": "Fans List",
   "registration_time": "Registered:",
   "profile_updated": "Updated:",

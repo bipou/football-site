@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod captcha;
 pub mod category_db;
 pub mod db;
 pub mod email;
