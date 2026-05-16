@@ -124,7 +124,7 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
     let w: f64 = 160.0;
     let h: f64 = 40.0;
     let cy: f64 = 26.0;
-    let base_size = 16.0;
+    let base_size = 18.0;
 
     // 随机字符间距 (不均匀，防 OCR 切割)
     let cx1 = 22.0 + gen_range_f64(-4.0, 4.0);
@@ -132,9 +132,9 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
     let cx3 = 92.0 + gen_range_f64(-4.0, 4.0);
 
     // 每个字符不同字号
-    let s1 = base_size + gen_range_f64(-3.0, 3.0);
-    let s2 = base_size + gen_range_f64(-3.0, 3.0);
-    let s3 = base_size + gen_range_f64(-3.0, 3.0);
+    let s1 = base_size + gen_range_f64(-2.0, 2.0);
+    let s2 = base_size + gen_range_f64(-2.0, 2.0);
+    let s3 = base_size + gen_range_f64(-2.0, 2.0);
 
     // 随机旋转 ±20°
     let rot1 = gen_range_f64(-20.0, 20.0);
@@ -193,6 +193,17 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
         ));
     }
 
+    // 数字区域增强噪声（直接覆盖数字上方，加大 OCR 难度）
+    for _ in 0..4 {
+        let lx1 = gen_range_f64(15.0, 110.0);
+        let ly1 = gen_range_f64(8.0, h - 8.0);
+        let lx2 = lx1 + gen_range_f64(-30.0, 30.0);
+        let ly2 = ly1 + gen_range_f64(-15.0, 15.0);
+        svg.push_str(&format!(
+            "<line x1=\"{lx1}\" y1=\"{ly1}\" x2=\"{lx2}\" y2=\"{ly2}\" stroke=\"#adb5bd\" stroke-width=\"0.6\" opacity=\"0.35\"/>"
+        ));
+    }
+
     // 密集噪点 (25 个)
     for _ in 0..25 {
         let dx = gen_range_f64(8.0, w - 8.0);
@@ -235,6 +246,26 @@ fn render_svg(left: u8, right: u8, op: char) -> String {
     svg.push_str(&format!(
         "<text x=\"130\" y=\"{cy}\" font-size=\"{base_size}\" font-family=\"Courier,monospace\" font-weight=\"bold\" fill=\"#495057\" text-anchor=\"middle\">=</text>"
     ));
+
+    // 覆盖层噪点（叠加在数字上方，干扰 OCR）
+    for _ in 0..8 {
+        let ox = gen_range_f64(15.0, 110.0);
+        let oy = gen_range_f64(8.0, h - 8.0);
+        let or_ = gen_range_f64(0.8, 2.5);
+        svg.push_str(&format!(
+            "<circle cx=\"{ox}\" cy=\"{oy}\" r=\"{or_}\" fill=\"#6c757d\" opacity=\"0.45\"/>"
+        ));
+    }
+    // 短划穿过数字
+    for _ in 0..5 {
+        let ox = gen_range_f64(15.0, 110.0);
+        let oy = gen_range_f64(8.0, h - 8.0);
+        let ox2 = ox + gen_range_f64(-10.0, 10.0);
+        let oy2 = oy + gen_range_f64(-4.0, 4.0);
+        svg.push_str(&format!(
+            "<line x1=\"{ox}\" y1=\"{oy}\" x2=\"{ox2}\" y2=\"{oy2}\" stroke=\"#6c757d\" stroke-width=\"1.4\" stroke-linecap=\"round\" opacity=\"0.40\"/>"
+        ));
+    }
 
     svg.push_str("</svg>");
     svg
