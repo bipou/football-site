@@ -11,6 +11,7 @@ use crate::utils::constant::{GRID_2, H1, HOVER_UNDERLINE, TEXT_SUBTLE};
 
 // ── Type alias ───────────────────────────────────────────────────────────
 type Either5<A, B, C, D, E> = Either<A, Either<B, Either<C, Either<D, E>>>>;
+type Either6<A, B, C, D, E, F> = Either<A, Either<B, Either<C, Either<D, Either<E, F>>>>>;
 type Either3<A, B, C> = Either<A, Either<B, C>>;
 
 // ── Topic input component ────────────────────────────────────────────────
@@ -190,8 +191,11 @@ pub async fn register(
 
     let user_rid = into_rid(&user_id, "users");
     if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_rid).await {
-        let kid = record_key(&user_id);
-        let _ = email_mod::send_activation_email(&lang, &username, &kid, &email_addr).await;
+        let kid = record_key(&user_id).to_string();
+        // 邮件发送与注册解耦，避免 SMTP 阻塞响应
+        tokio::spawn(async move {
+            let _ = email_mod::send_activation_email(&lang, &username, &kid, &email_addr).await;
+        });
     }
 
     Ok(())
@@ -283,6 +287,28 @@ fn CaptchaGate(
         }
     };
 
+    // 每5分钟自动刷新验证码
+    set_interval(
+        move || {
+            captcha_res.refetch();
+            set_captcha_ok.set(false);
+            set_status_msg.set(String::new());
+        },
+        std::time::Duration::from_secs(300),
+    );
+
+    // 表单提交出错后自动刷新验证码
+    Effect::new(move |_| {
+        if let Some(Err(_)) = action.value().get() {
+            captcha_res.refetch();
+            set_captcha_ok.set(false);
+            set_status_msg.set(String::new());
+            if let Some(input) = answer_ref.get() {
+                let _ = input.set_value("");
+            }
+        }
+    });
+
     view! {
         <ActionForm action=action>
             {children()}
@@ -324,15 +350,17 @@ fn CaptchaGate(
             {move || action.value().get().and_then(|r| r.err()).map(|e| {
                 let raw = e.to_string();
                 if raw.contains("captcha_invalid") {
-                    Either5::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, captcha_invalid)}</p> })
-                } else if raw.contains("sign_in_incorrect") || raw.contains("register_exist") {
-                    Either5::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_incorrect)}</p> }))
-                } else if raw.contains("sign_in_not_activation") || raw.contains("register_password_mismatch") {
-                    Either5::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_not_activation)}</p> })))
-                } else if raw.contains("sign_in_banned") || raw.contains("register_password_weak") {
-                    Either5::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_banned)}</p> }))))
+                    Either6::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, captcha_invalid)}</p> })
+                } else if raw.contains("sign_in_incorrect") {
+                    Either6::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_incorrect)}</p> }))
+                } else if raw.contains("sign_in_not_activation") {
+                    Either6::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_not_activation)}</p> })))
+                } else if raw.contains("sign_in_banned") {
+                    Either6::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_banned)}</p> }))))
+                } else if raw.contains("sign_in_security_problem") {
+                    Either6::Right(Either::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_security_problem)}</p> })))))
                 } else {
-                    Either5::Right(Either::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> }))))
+                    Either6::Right(Either::Right(Either::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> })))))
                 }
             })}
         </ActionForm>
@@ -380,6 +408,28 @@ fn CaptchaGateRegister(children: Children, action: ServerAction<Register>) -> im
         }
     };
 
+    // 每5分钟自动刷新验证码
+    set_interval(
+        move || {
+            captcha_res.refetch();
+            set_captcha_ok.set(false);
+            set_status_msg.set(String::new());
+        },
+        std::time::Duration::from_secs(300),
+    );
+
+    // 表单提交出错后自动刷新验证码
+    Effect::new(move |_| {
+        if let Some(Err(_)) = action.value().get() {
+            captcha_res.refetch();
+            set_captcha_ok.set(false);
+            set_status_msg.set(String::new());
+            if let Some(input) = answer_ref.get() {
+                let _ = input.set_value("");
+            }
+        }
+    });
+
     view! {
         <ActionForm action=action>
             {children()}
@@ -422,12 +472,12 @@ fn CaptchaGateRegister(children: Children, action: ServerAction<Register>) -> im
                 let raw = e.to_string();
                 if raw.contains("captcha_invalid") {
                     Either5::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, captcha_invalid)}</p> })
-                } else if raw.contains("sign_in_incorrect") || raw.contains("register_exist") {
-                    Either5::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_incorrect)}</p> }))
-                } else if raw.contains("sign_in_not_activation") || raw.contains("register_password_mismatch") {
-                    Either5::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_not_activation)}</p> })))
-                } else if raw.contains("sign_in_banned") || raw.contains("register_password_weak") {
-                    Either5::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, sign_in_banned)}</p> }))))
+                } else if raw.contains("register_password_mismatch") {
+                    Either5::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_mismatch)}</p> }))
+                } else if raw.contains("register_password_weak") {
+                    Either5::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_password_weak)}</p> })))
+                } else if raw.contains("register_exist") {
+                    Either5::Right(Either::Right(Either::Right(Either::Left(view! { <p class="text-red-500 text-sm text-center">{move || t!(i18n, register_exist)}</p> }))))
                 } else {
                     Either5::Right(Either::Right(Either::Right(Either::Right(view! { <p class="text-red-500 text-sm text-center">{raw}</p> }))))
                 }
