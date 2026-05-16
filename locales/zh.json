@@ -15,7 +15,7 @@
 
   "loading": "加载中...",
   "error_404": "页面未找到",
-  "go_home": "返回首页",
+  "go_home": "回首页",
 
   "footballs_today": "今日最新计算",
   "footballs_yesterday": "昨日计算复盘",
@@ -73,7 +73,7 @@
   "register_have_account": "已有账户？",
   "register_go_sign_in": "去签入",
   "register_exist": "用户名或邮箱已存在",
-  "register_success": "注册成功！请查阅邮件激活账户。",
+  "register_success": "{{ username }}，恭喜，注册成功。 \n请查阅邮件，激活账户。",
 
   "captcha_label": "安全验证",
   "captcha_placeholder": "输入算式结果",
