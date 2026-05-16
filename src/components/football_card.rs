@@ -156,7 +156,7 @@ pub fn FootballCard(football: Football) -> impl IntoView {
     view! {
         <div class=card_class>
             <div class=format!("{} mb-2", FLEX_BETWEEN)>
-                <a href=format!("/footballs/{}", football.id) class="font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 no-underline text-base leading-tight">
+                <a href=format!("/footballs/{}", crate::utils::common::record_key(&football.id)) class="font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 no-underline text-base leading-tight">
                     {football.home_team} " vs " {football.away_team}
                 </a>
                 <span class="text-sm text-gray-400 ml-2 whitespace-nowrap">{status_badge(football.status)}</span>
@@ -174,8 +174,11 @@ pub fn FootballCard(football: Football) -> impl IntoView {
 
             <div class=format!("{} mt-3", FLEX_BETWEEN)>
                 <div class="flex flex-wrap gap-1">
-                    {topics.iter().map(|t| view! {
-                        <a href=format!("/footballs?filter=topic&fid={}", t.id) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
+                    {topics.iter().map(|t| {
+                        let kid = crate::utils::common::record_key(&t.id).to_string();
+                        view! {
+                            <a href=format!("/footballs?filter=topic&fid={}", kid) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
+                        }
                     }).collect::<Vec<_>>()}
                 </div>
                 <span class="text-sm text-gray-400">{move || t!(i18n, football_hits)} {football.hits}</span>

@@ -79,7 +79,8 @@ fn Random() -> impl IntoView {
     let navigate = leptos_router::hooks::use_navigate();
     Effect::new(move |_| {
         if let Some(Ok(Some(id))) = random_action.value().get() {
-            navigate(&format!("/footballs/{}", id), Default::default());
+            let kid = crate::utils::common::record_key(&id).to_string();
+            navigate(&format!("/footballs/{}", kid), Default::default());
         }
     });
     view! {

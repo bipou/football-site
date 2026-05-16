@@ -148,6 +148,7 @@ pub async fn register(
     lang: String,
 ) -> Result<(), ServerFnError> {
     use crate::server::{email as email_mod, user_db};
+    use crate::utils::common::{into_rid, record_key};
 
     if password != confirm_password {
         return Err(ServerFnError::new("register_password_mismatch"));
@@ -173,8 +174,10 @@ pub async fn register(
         .map_err(|e| ServerFnError::new(e.to_string()))?;
 
     // Send activation email (non-fatal)
-    if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_id).await {
-        let _ = email_mod::send_activation_email(&lang, &username, &user_id, &email_addr).await;
+    let user_rid = into_rid(&user_id, "users");
+    if let Ok(Some((email_addr, _))) = user_db::get_user_email_username(&user_rid).await {
+        let kid = record_key(&user_id);
+        let _ = email_mod::send_activation_email(&lang, &username, &kid, &email_addr).await;
     }
 
     Ok(())
@@ -185,7 +188,9 @@ pub async fn register(
 #[server]
 pub async fn activate_user(user_id: String) -> Result<Option<String>, ServerFnError> {
     use crate::server::user_db;
-    user_db::activate_user(&user_id)
+    use crate::utils::common::into_rid;
+    let rid = into_rid(&user_id, "users");
+    user_db::activate_user(&rid)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))
 }
@@ -193,7 +198,9 @@ pub async fn activate_user(user_id: String) -> Result<Option<String>, ServerFnEr
 #[server]
 pub async fn resend_activation(user_id: String, lang: String) -> Result<(), ServerFnError> {
     use crate::server::{email as email_mod, user_db};
-    let (email, username) = user_db::get_user_email_username(&user_id)
+    use crate::utils::common::into_rid;
+    let rid = into_rid(&user_id, "users");
+    let (email, username) = user_db::get_user_email_username(&rid)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))?
         .ok_or_else(|| ServerFnError::new("User not found".to_string()))?;

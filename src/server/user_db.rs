@@ -4,6 +4,7 @@ use surrealdb::types::{Datetime, RecordId, SurrealValue};
 
 use crate::models::{AuthUser, User, UserSummary, UsersResult};
 use crate::server::{auth as auth_mod, db::get_db, topic_db};
+use crate::utils::common::{record_key, rid_str};
 use crate::utils::constant;
 
 // ── helpers ──────────────────────────────────────────────────────────────
@@ -65,29 +66,32 @@ pub async fn get_users(from: i64) -> Result<UsersResult, String> {
     let total = counts.first().map(|c| c.count).unwrap_or(0);
 
     // page of docs
-    let sql = format!(
-        "SELECT * FROM users WHERE status >= 1 ORDER BY created_at DESC LIMIT {ps} START {skip}"
-    );
-    let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
+    let mut resp = get_db()
+        .query(
+            "SELECT * FROM users WHERE status >= 1 ORDER BY created_at DESC LIMIT $ps START $skip",
+        )
+        .bind(("ps", ps))
+        .bind(("skip", skip))
+        .await
+        .map_err(|e| e.to_string())?;
     let docs: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
 
     let mut items = Vec::with_capacity(docs.len());
     for d in docs {
-        let uid = common::id_only(&d.id);
-        let keywords = topic_db::get_keywords_by_user_id(&uid)
+        let keywords = topic_db::get_keywords_by_user_id(&d.id)
             .await
             .unwrap_or_else(|e| {
-                leptos::logging::error!("get_keywords_by_user_id({uid}): {e}");
+                leptos::logging::error!("get_keywords_by_user_id: {e}");
                 vec![]
             });
-        let topics = topic_db::get_topics_by_user_id(&uid)
+        let topics = topic_db::get_topics_by_user_id(&d.id)
             .await
             .unwrap_or_else(|e| {
-                leptos::logging::error!("get_topics_by_user_id({uid}): {e}");
+                leptos::logging::error!("get_topics_by_user_id: {e}");
                 vec![]
             });
         items.push(UserSummary {
-            id: uid,
+            id: rid_str(&d.id),
             username: d.username,
             created_at: common::ymd8(&d.created_at),
             updated_at: common::ymd8(&d.updated_at),
@@ -117,22 +121,21 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
         return Ok(None);
     };
 
-    let uid = common::id_only(&d.id);
-    let keywords = topic_db::get_keywords_by_user_id(&uid)
+    let keywords = topic_db::get_keywords_by_user_id(&d.id)
         .await
         .unwrap_or_else(|e| {
-            leptos::logging::error!("get_keywords_by_user_id({uid}): {e}");
+            leptos::logging::error!("get_keywords_by_user_id: {e}");
             vec![]
         });
-    let topics = topic_db::get_topics_by_user_id(&uid)
+    let topics = topic_db::get_topics_by_user_id(&d.id)
         .await
         .unwrap_or_else(|e| {
-            leptos::logging::error!("get_topics_by_user_id({uid}): {e}");
+            leptos::logging::error!("get_topics_by_user_id: {e}");
             vec![]
         });
 
     Ok(Some(User {
-        id: uid,
+        id: rid_str(&d.id),
         username: d.username,
         email: d.email,
         introduction_html: render_md(&d.introduction),
@@ -145,13 +148,9 @@ pub async fn get_user_by_username(username: &str) -> Result<Option<User>, String
     }))
 }
 
-/// Raw user document lookup by id (accepts plain id or `users:xxx`).
-pub async fn get_user_doc_by_id(id: &str) -> Result<Option<UserDoc>, String> {
-    let rid = common::record_id("users", id);
-    let sql = format!("SELECT * FROM {rid}");
-    let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
-    let docs: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
-    Ok(docs.into_iter().next())
+/// Raw user document lookup by id (accepts full RecordId).
+pub async fn get_user_doc_by_id(rid: &RecordId) -> Result<Option<UserDoc>, String> {
+    get_db().select(rid).await.map_err(|e| e.to_string())
 }
 
 /// Authenticate by email or username + password.
@@ -180,10 +179,8 @@ pub async fn sign_in(signature: &str, password: &str) -> Result<AuthUser, String
     match user.status {
         1..=10 => {}
         0 => {
-            return Err(format!(
-                "sign_in_not_activation:{}",
-                common::id_only(&user.id)
-            ));
+            let uid = rid_str(&user.id);
+            return Err(format!("sign_in_not_activation:{}", record_key(&uid)));
         }
         -1 => return Err("sign_in_banned".to_string()),
         _ => return Err("sign_in_security_problem".to_string()),
@@ -218,6 +215,8 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String), Strin
     }
 
     let cred = auth_mod::hash_credential(&username, &data.password);
+    // NOTE: kept `.query()` over `db.create().content()` because
+    // `time::now()` is a SurrealQL function — not expressible as a Rust literal.
     let mut resp = get_db()
         .query(
             "CREATE users CONTENT { \
@@ -238,7 +237,7 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String), Strin
         .map_err(|e| e.to_string())?;
     let created: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
     let user_doc = created.into_iter().next().ok_or("failed to create user")?;
-    let uid_str = common::id_only(&user_doc.id);
+    let uid_str = rid_str(&user_doc.id);
 
     // optional topics
     if !data.topics.trim().is_empty() {
@@ -250,21 +249,17 @@ pub async fn register_user(data: RegisterData) -> Result<(String, String), Strin
 }
 
 /// Set status 0 → 1.  Returns the user's username if activation happened.
-pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
-    let rid = common::record_id("users", user_id);
+pub async fn activate_user(rid: &RecordId) -> Result<Option<String>, String> {
+    let doc: Option<UserDoc> = get_db().select(rid).await.map_err(|e| e.to_string())?;
 
-    let sql = format!("SELECT * FROM {rid}");
-    let mut resp = get_db().query(&sql).await.map_err(|e| e.to_string())?;
-    let docs: Vec<UserDoc> = resp.take(0).map_err(|e| e.to_string())?;
-
-    let Some(u) = docs.into_iter().next() else {
+    let Some(u) = doc else {
         return Ok(None);
     };
 
     if u.status == 0 {
         get_db()
             .query("UPDATE $rid SET status = 1, updated_at = time::now()")
-            .bind(("rid", rid))
+            .bind(("rid", rid.clone()))
             .await
             .map_err(|e| e.to_string())?;
     }
@@ -273,8 +268,8 @@ pub async fn activate_user(user_id: &str) -> Result<Option<String>, String> {
 }
 
 /// Convenience lookup returning `(email, username)`.
-pub async fn get_user_email_username(user_id: &str) -> Result<Option<(String, String)>, String> {
-    Ok(get_user_doc_by_id(user_id)
+pub async fn get_user_email_username(rid: &RecordId) -> Result<Option<(String, String)>, String> {
+    Ok(get_user_doc_by_id(rid)
         .await?
         .map(|u| (u.email, u.username)))
 }

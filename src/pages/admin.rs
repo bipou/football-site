@@ -32,7 +32,9 @@ pub async fn get_admin_footballs(from: i64) -> Result<FootballsResult, ServerFnE
 #[server]
 pub async fn admin_update_status(football_id: String, status: i8) -> Result<(), ServerFnError> {
     use crate::server::football_db;
-    football_db::update_football_status(&football_id, status)
+    use crate::utils::common::into_rid;
+    let rid = into_rid(&football_id, "footballs");
+    football_db::update_football_status(&rid, status)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))
 }
@@ -138,7 +140,7 @@ pub fn AdminFootballsPage() -> impl IntoView {
                                             view! {
                                                 <div class="card p-4 flex items-center gap-4 flex-wrap">
                                                     <div class="flex-1 min-w-0">
-                                                        <a href=format!("/footballs/{}", f.id.to_string())
+                                                        <a href=format!("/footballs/{}", crate::utils::common::record_key(&f.id))
                                                            class=format!("font-semibold text-gray-800 dark:text-gray-100 hover:text-blue-600 {} text-sm", NO_UNDERLINE)>
                                                                {f.home_team.clone()} " vs " {f.away_team.clone()}
                                                         </a>

@@ -15,8 +15,10 @@ use crate::models::Football;
 #[server]
 pub async fn get_football_and_increment(id: String) -> Result<Option<Football>, ServerFnError> {
     use crate::server::football_db;
-    let _ = football_db::increment_hits(&id).await;
-    football_db::get_football_by_id(&id)
+    use crate::utils::common::into_rid;
+    let rid = into_rid(&id, "footballs");
+    let _ = football_db::increment_hits(&rid).await;
+    football_db::get_football_by_id(&rid)
         .await
         .map_err(|e| ServerFnError::new(e.to_string()))
 }
@@ -215,8 +217,11 @@ fn DetailTopicsSection(topics: Vec<crate::models::Topic>) -> impl IntoView {
             <div class="card p-4 mb-6">
                 <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, football_keys_tags)}</p>
                 <div class=FLEX_WRAP_GAP>
-                    {topics.iter().map(|t| view! {
-                        <a href=format!("/footballs?filter=topic&fid={}", t.id) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
+                    {topics.iter().map(|t| {
+                        let kid = crate::utils::common::record_key(&t.id).to_string();
+                        view! {
+                            <a href=format!("/footballs?filter=topic&fid={}", kid) class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
+                        }
                     }).collect::<Vec<_>>()}
                 </div>
             </div>

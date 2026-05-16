@@ -1,4 +1,4 @@
-use crate::utils::common;
+use crate::utils::common::{self, rid_str};
 use crate::utils::constant;
 use chrono::{Duration, FixedOffset, TimeZone, Timelike, Utc};
 use serde::Deserialize;
@@ -6,8 +6,6 @@ use surrealdb::types::{Datetime as Sdt, RecordId, SurrealValue};
 
 use crate::models::{Football, FootballLine, FootballOver, FootballsResult};
 use crate::server::{category_db, db::get_db, topic_db};
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 // ── Datetime formatters ────────────────────────────────────────────────────────
 
@@ -25,7 +23,7 @@ fn mdhm8(dt: &Sdt) -> String {
 #[derive(Debug, Deserialize, SurrealValue)]
 struct FootballDoc {
     id: RecordId,
-    category_id: String,
+    category_id: RecordId,
     season: String,
     home_team: String,
     away_team: String,
@@ -74,7 +72,7 @@ struct IdOnly {
 
 fn line_into(d: FootballLineDoc) -> FootballLine {
     FootballLine {
-        id: common::id_only(&d.id),
+        id: rid_str(&d.id),
         win: d.win,
         draw: d.draw,
         loss: d.loss,
@@ -85,7 +83,7 @@ fn line_into(d: FootballLineDoc) -> FootballLine {
 
 fn over_into(d: FootballOverDoc) -> FootballOver {
     FootballOver {
-        id: common::id_only(&d.id),
+        id: rid_str(&d.id),
         s: d.s,
         wdl: d.wdl,
         tg: d.tg,
@@ -105,11 +103,10 @@ fn il_pair<T: Clone>(v: Vec<T>) -> Vec<T> {
 
 // ── Internal fetchers ──────────────────────────────────────────────────────────
 
-async fn fetch_lines(fid: &str, kind: u8) -> Result<Vec<FootballLine>, String> {
-    let rid = common::record_id("footballs", fid);
+async fn fetch_lines(rid: &RecordId, kind: u8) -> Result<Vec<FootballLine>, String> {
     let mut res = get_db()
         .query("SELECT * FROM footballs_lines WHERE football_id = $fid AND kind = $kind ORDER BY created_at ASC")
-        .bind(("fid", rid))
+        .bind(("fid", rid.clone()))
         .bind(("kind", kind))
         .await
         .map_err(|e| e.to_string())?;
@@ -117,11 +114,10 @@ async fn fetch_lines(fid: &str, kind: u8) -> Result<Vec<FootballLine>, String> {
     Ok(docs.into_iter().map(line_into).collect())
 }
 
-async fn fetch_overs(fid: &str, kind: u8) -> Result<Vec<FootballOver>, String> {
-    let rid = common::record_id("footballs", fid);
+async fn fetch_overs(rid: &RecordId, kind: u8) -> Result<Vec<FootballOver>, String> {
     let mut res = get_db()
         .query("SELECT * FROM footballs_overs WHERE football_id = $fid AND kind = $kind ORDER BY created_at ASC")
-        .bind(("fid", rid))
+        .bind(("fid", rid.clone()))
         .bind(("kind", kind))
         .await
         .map_err(|e| e.to_string())?;
@@ -132,16 +128,16 @@ async fn fetch_overs(fid: &str, kind: u8) -> Result<Vec<FootballOver>, String> {
 // ── Enrich ─────────────────────────────────────────────────────────────────────
 
 async fn enrich(doc: FootballDoc) -> Result<Football, String> {
-    let fid = common::id_only(&doc.id);
-    let lines = fetch_lines(&fid, 0).await?;
-    let calcs = fetch_overs(&fid, 0).await?;
-    let officials = fetch_overs(&fid, 1).await?;
-    let topics = topic_db::get_topics_by_football_id(&fid).await?;
+    let fid = rid_str(&doc.id);
+    let lines = fetch_lines(&doc.id, 0).await?;
+    let calcs = fetch_overs(&doc.id, 0).await?;
+    let officials = fetch_overs(&doc.id, 1).await?;
+    let topics = topic_db::get_topics_by_football_id(&doc.id).await?;
     let category = category_db::get_category_by_id(&doc.category_id).await?;
 
     Ok(Football {
         id: fid,
-        category_id: doc.category_id,
+        category_id: rid_str(&doc.category_id),
         season: doc.season,
         home_team: doc.home_team,
         away_team: doc.away_team,
@@ -159,8 +155,6 @@ async fn enrich(doc: FootballDoc) -> Result<Football, String> {
         topics,
     })
 }
-
-// ── Pagination ─────────────────────────────────────────────────────────────────
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
@@ -203,16 +197,8 @@ pub async fn get_footballs_in_position(
     Ok(out)
 }
 
-pub async fn get_football_by_id(id: &str) -> Result<Option<Football>, String> {
-    let bare = if id.contains(':') {
-        id.split(':').nth(1).unwrap_or(id)
-    } else {
-        id
-    };
-    let doc: Option<FootballDoc> = get_db()
-        .select(("footballs", bare))
-        .await
-        .map_err(|e| e.to_string())?;
+pub async fn get_football_by_id(rid: &RecordId) -> Result<Option<Football>, String> {
+    let doc: Option<FootballDoc> = get_db().select(rid).await.map_err(|e| e.to_string())?;
     match doc {
         Some(d) => Ok(Some(enrich(d).await?)),
         None => Ok(None),
@@ -225,7 +211,7 @@ pub async fn get_random_football_id() -> Result<Option<String>, String> {
         .await
         .map_err(|e| e.to_string())?;
     let docs: Vec<IdOnly> = res.take(0).map_err(|e| e.to_string())?;
-    Ok(docs.into_iter().next().map(|d| common::id_only(&d.id)))
+    Ok(docs.into_iter().next().map(|d| rid_str(&d.id)))
 }
 
 pub async fn get_footballs(
@@ -265,15 +251,14 @@ pub async fn get_footballs(
 }
 
 pub async fn get_footballs_by_category(
-    category_id: &str,
+    category_rid: &RecordId,
     from: i64,
 ) -> Result<FootballsResult, String> {
-    let cid = common::record_id("categories", category_id);
     let ps = constant::config().page_size;
 
     let mut cres = get_db()
         .query("SELECT count() FROM footballs WHERE category_id = $cid AND status >= 1 GROUP ALL")
-        .bind(("cid", cid.clone()))
+        .bind(("cid", category_rid.clone()))
         .await
         .map_err(|e| e.to_string())?;
     let counts: Vec<CountResult> = cres.take(0).map_err(|e| e.to_string())?;
@@ -282,7 +267,7 @@ pub async fn get_footballs_by_category(
 
     let mut res = get_db()
         .query("SELECT * FROM footballs WHERE category_id = $cid AND status >= 1 ORDER BY kick_off_at DESC, updated_at DESC LIMIT $ps START $skip")
-        .bind(("cid", cid))
+        .bind(("cid", category_rid.clone()))
         .bind(("ps", ps))
         .bind(("skip", skip))
         .await
@@ -298,15 +283,18 @@ pub async fn get_footballs_by_category(
     })
 }
 
-pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<FootballsResult, String> {
+pub async fn get_footballs_by_topic(
+    topic_rid: &RecordId,
+    from: i64,
+) -> Result<FootballsResult, String> {
     let ps = constant::config().page_size;
 
     // Fetch distinct football_ids linked to this topic
-    let q = format!(
-        "SELECT VALUE football_id FROM topics_rel WHERE topic_id = '{}' AND football_id IS NOT NONE",
-        topic_id
-    );
-    let mut rel_res = get_db().query(&q).await.map_err(|e| e.to_string())?;
+    let mut rel_res = get_db()
+        .query("SELECT VALUE football_id FROM topics_rel WHERE topic_id = $tid AND football_id IS NOT NONE")
+        .bind(("tid", topic_rid.clone()))
+        .await
+        .map_err(|e| e.to_string())?;
     let raw_ids: Vec<String> = rel_res.take(0).map_err(|e| e.to_string())?;
 
     // Deduplicate
@@ -328,8 +316,8 @@ pub async fn get_footballs_by_topic(topic_id: &str, from: i64) -> Result<Footbal
         });
     }
 
-    // Build IN list (ids are already record-id strings like "footballs:xxx")
-    let id_list: Vec<String> = page_fids.iter().map(|id| format!("'{}'", id)).collect();
+    // Build IN list (ids are record-id strings like "footballs:xxx")
+    let id_list: Vec<String> = page_fids.iter().map(|id| format!("{}", id)).collect();
     let q = format!(
         "SELECT * FROM footballs WHERE id IN [{}] AND status >= 1 ORDER BY kick_off_at DESC",
         id_list.join(",")
@@ -375,22 +363,20 @@ pub async fn get_footballs_admin(from: i64) -> Result<FootballsResult, String> {
     })
 }
 
-pub async fn update_football_status(id: &str, status: i8) -> Result<(), String> {
-    let rid = common::record_id("footballs", id);
+pub async fn update_football_status(rid: &RecordId, status: i8) -> Result<(), String> {
     get_db()
         .query("UPDATE $rid SET status = $status, updated_at = time::now()")
-        .bind(("rid", rid))
+        .bind(("rid", rid.clone()))
         .bind(("status", status))
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
 }
 
-pub async fn increment_hits(id: &str) -> Result<(), String> {
-    let rid = common::record_id("footballs", id);
+pub async fn increment_hits(rid: &RecordId) -> Result<(), String> {
     get_db()
         .query("UPDATE $rid SET hits += 1")
-        .bind(("rid", rid))
+        .bind(("rid", rid.clone()))
         .await
         .map_err(|e| e.to_string())?;
     Ok(())

@@ -1,4 +1,4 @@
-use crate::utils::common;
+use crate::utils::common::rid_str;
 use serde::Deserialize;
 use surrealdb::types::{RecordId, SurrealValue};
 
@@ -20,7 +20,7 @@ struct NameDoc {
 
 fn into_category(d: CategoryDoc) -> Category {
     Category {
-        id: common::id_only(&d.id),
+        id: rid_str(&d.id),
         name_zh: d.name.zh,
         name_en: d.name.en,
         level: d.level,
@@ -36,16 +36,8 @@ pub async fn get_categories() -> Result<Vec<Category>, String> {
     Ok(docs.into_iter().map(into_category).collect())
 }
 
-pub async fn get_category_by_id(id: &str) -> Result<Option<Category>, String> {
-    let bare = if id.contains(':') {
-        id.split(':').nth(1).unwrap_or(id)
-    } else {
-        id
-    };
-    let doc: Option<CategoryDoc> = get_db()
-        .select(("categories", bare))
-        .await
-        .map_err(|e| e.to_string())?;
+pub async fn get_category_by_id(rid: &RecordId) -> Result<Option<Category>, String> {
+    let doc: Option<CategoryDoc> = get_db().select(rid).await.map_err(|e| e.to_string())?;
     Ok(doc.map(into_category))
 }
 

@@ -85,7 +85,8 @@ pub fn UsersPage() -> impl IntoView {
                                                         Either::Left(view! {
                                                             <div class="flex flex-wrap gap-1 mt-1">
                                                                 {u.keywords.iter().take(8).map(|t| {
-                                                                    let url = format!("/footballs?topic={}", t.id);
+                                                                    let kid = crate::utils::common::record_key(&t.id).to_string();
+                                                                    let url = format!("/footballs?topic={}", kid);
                                                                     view! {
                                                                         <a href=url class=format!("text-sm {}", BADGE_BLUE_NO_UL)>{t.name.clone()}</a>
                                                                     }
@@ -147,7 +148,8 @@ fn KeywordsTopics(
                             <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, features_topics)}</p>
                             <div class={FLEX_WRAP_GAP}>
                                 {keywords.iter().map(|t| {
-                                    let url = format!("/footballs?topic={}", t.id);
+                                    let kid = crate::utils::common::record_key(&t.id).to_string();
+                                    let url = format!("/footballs?topic={}", kid);
                                     view! {
                                         <a href=url class=BADGE_BLUE_NO_UL>{t.name.clone()}</a>
                                     }
@@ -164,7 +166,8 @@ fn KeywordsTopics(
                             <p class="text-xs text-gray-500 mb-2">{move || t!(i18n, related_topics)}</p>
                             <div class={FLEX_WRAP_GAP}>
                                 {topics.iter().map(|t| {
-                                    let url = format!("/footballs?topic={}", t.id);
+                                    let kid = crate::utils::common::record_key(&t.id).to_string();
+                                    let url = format!("/footballs?topic={}", kid);
                                     view! {
                                         <a href=url class=BADGE_GRAY_NO_UL>
                                             {t.name.clone()}

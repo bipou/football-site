@@ -40,32 +40,46 @@ pub fn make_page_info(from: i64, ps: i64, total: u64) -> PageInfo {
     }
 }
 
+// ── RecordId helpers (client + server) ────────────────────────────────────────
+
+/// Extract the bare key from a "table:id" string, for URL path / query generation.
+/// `"footballs:abc123"` → `"abc123"`
+/// `"abc123"`           → `"abc123"` (passthrough for bare keys)
+pub fn record_key(full: &str) -> &str {
+    full.rsplit_once(':').map(|(_, k)| k).unwrap_or(full)
+}
+
 // ── SurrealDB helpers (server only) ───────────────────────────────────────────
 
 #[cfg(feature = "ssr")]
 use surrealdb::types::{RecordId, RecordIdKey};
 
 #[cfg(feature = "ssr")]
-pub fn id_only(r: &RecordId) -> String {
-    match &r.key {
+/// `RecordIdKey` → plain string (internal helper)
+fn key_str(key: &RecordIdKey) -> String {
+    match key {
         RecordIdKey::String(s) => s.clone(),
         RecordIdKey::Number(n) => n.to_string(),
-        _ => format!("{r:?}"),
+        RecordIdKey::Uuid(u) => u.to_string(),
+        _ => format!("{key:?}"),
     }
 }
 
 #[cfg(feature = "ssr")]
-pub fn record_id(table: &str, id: &str) -> String {
-    if id.contains(':') {
-        id.to_string()
-    } else {
-        format!("{}:{}", table, id)
-    }
-}
-
-#[cfg(feature = "ssr")]
+/// `RecordId` → `"table:id"` string (use this instead of Display, which RecordId lacks)
 pub fn rid_str(r: &RecordId) -> String {
-    format!("{}:{}", r.table, id_only(r))
+    format!("{}:{}", r.table, key_str(&r.key))
+}
+
+#[cfg(feature = "ssr")]
+/// Parse a string into `RecordId`.
+/// If `input` contains `:` it is parsed as `"table:key"`; otherwise `default_table` is prepended.
+pub fn into_rid(input: &str, default_table: &str) -> RecordId {
+    if let Some((tbl, key)) = input.split_once(':') {
+        RecordId::new(tbl, key)
+    } else {
+        RecordId::new(default_table, input)
+    }
 }
 
 // ── Datetime helpers (server only) ────────────────────────────────────────────

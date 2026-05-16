@@ -46,11 +46,18 @@ pub async fn get_footballs_page(
     filter_id: String,
 ) -> Result<FootballsResult, ServerFnError> {
     use crate::server::football_db;
+    use crate::utils::common::into_rid;
     let res = match filter.as_str() {
         "picks" => football_db::get_footballs(from, 3, 4).await,
         "hot" => football_db::get_footballs(from, 2, 4).await,
-        "category" => football_db::get_footballs_by_category(&filter_id, from).await,
-        "topic" => football_db::get_footballs_by_topic(&filter_id, from).await,
+        "category" => {
+            let rid = into_rid(&filter_id, "categories");
+            football_db::get_footballs_by_category(&rid, from).await
+        }
+        "topic" => {
+            let rid = into_rid(&filter_id, "topics");
+            football_db::get_footballs_by_topic(&rid, from).await
+        }
         _ => football_db::get_footballs(from, 1, 4).await,
     };
     res.map_err(|e| ServerFnError::new(e.to_string()))
@@ -132,7 +139,8 @@ pub fn FootballsPage() -> impl IntoView {
                         {move || cats_res.get().map(|r| r.ok()).flatten().map(|cats| {
                             view! {
                                 {cats.into_iter().map(|cat| {
-                                    let url = format!("/footballs?filter=category&fid={}", cat.id);
+                                    let kid = crate::utils::common::record_key(&cat.id).to_string();
+                                    let url = format!("/footballs?filter=category&fid={}", kid);
                                     let cat_name = if i18n.get_locale() == Locale::zh { cat.name_zh.clone() } else { cat.name_en.clone() };
                                     view! {
                                         <a href=url class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
