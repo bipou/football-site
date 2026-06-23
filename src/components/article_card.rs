@@ -14,8 +14,10 @@ pub fn ArticleCard(football: Football, on_click: Callback<String>) -> impl IntoV
     let i18n = use_i18n();
     let title = football.title();
     let summary = football.summary.map(|s| {
-        if s.chars().count() > 80 {
-            let mut t: String = s.chars().take(80).collect();
+        let has_cjk = s.chars().any(|c| c as u32 > 0x2000);
+        let limit = if has_cjk { 45 } else { 100 };
+        if s.chars().count() > limit {
+            let mut t: String = s.chars().take(limit).collect();
             t.push_str("...");
             t
         } else {

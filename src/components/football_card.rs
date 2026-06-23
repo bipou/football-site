@@ -183,8 +183,10 @@ pub fn FootballCard(football: Football, on_click: Callback<String>) -> impl Into
     let hits = football.hits;
     let topics = football.topics;
     let summary = football.summary.map(|s| {
-        if s.chars().count() > 40 {
-            let mut t: String = s.chars().take(40).collect();
+        let has_cjk = s.chars().any(|c| c as u32 > 0x2000);
+        let limit = if has_cjk { 45 } else { 100 };
+        if s.chars().count() > limit {
+            let mut t: String = s.chars().take(limit).collect();
             t.push_str("...");
             t
         } else {
