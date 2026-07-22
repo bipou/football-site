@@ -14,7 +14,9 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[wasm_bindgen(inline_js = r#"
     export function push_ad_unit() {
         setTimeout(function() {
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
+            try {
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+            } catch(e) {}
         }, 0);
     }
 "#)]

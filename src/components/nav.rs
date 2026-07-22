@@ -52,13 +52,22 @@ fn Logo() -> impl IntoView {
 #[component]
 fn NavLinks() -> impl IntoView {
     let i18n = use_i18n();
+    let location = use_location();
+    let is_active = move |seg: &str| {
+        let path = location.pathname.get();
+        path.split('/').any(|s| s == seg)
+    };
     view! {
-        <LocaleA href="/footballs">
-            {move || t!(i18n, nav_football)}
-        </LocaleA>
-        <LocaleA href="/users">
-            {move || t!(i18n, nav_user)}
-        </LocaleA>
+        <span class=move || if is_active("footballs") { "nav-active" } else { "" }>
+            <LocaleA href="/footballs">
+                {move || t!(i18n, nav_football)}
+            </LocaleA>
+        </span>
+        <span class=move || if is_active("users") { "nav-active" } else { "" }>
+            <LocaleA href="/users">
+                {move || t!(i18n, nav_user)}
+            </LocaleA>
+        </span>
     }
 }
 
@@ -202,6 +211,11 @@ fn AuthSection() -> impl IntoView {
 fn HamburgerMenu() -> impl IntoView {
     let (open, set_open) = signal(false);
     let i18n = use_i18n();
+    let location = use_location();
+    let is_active = move |seg: &str| {
+        let path = location.pathname.get();
+        path.split('/').any(|s| s == seg)
+    };
     let close = Callback::new(move |_: leptos::ev::MouseEvent| set_open.set(false));
 
     view! {
@@ -223,12 +237,16 @@ fn HamburgerMenu() -> impl IntoView {
                 style="right:1rem"
             >
                 <div class="nav-links px-4 py-3 flex flex-col gap-2 items-center">
-                    <LocaleA href="/footballs" on_click=close>
-                        {move || t!(i18n, nav_football)}
-                    </LocaleA>
-                    <LocaleA href="/users" on_click=close>
-                        {move || t!(i18n, nav_user)}
-                    </LocaleA>
+                    <span class=move || if is_active("footballs") { "nav-active" } else { "" }>
+                        <LocaleA href="/footballs" on_click=close>
+                            {move || t!(i18n, nav_football)}
+                        </LocaleA>
+                    </span>
+                    <span class=move || if is_active("users") { "nav-active" } else { "" }>
+                        <LocaleA href="/users" on_click=close>
+                            {move || t!(i18n, nav_user)}
+                        </LocaleA>
+                    </span>
                 </div>
                 <hr/>
                 <div class="nav-links px-4 py-3 flex flex-col gap-2 items-center">

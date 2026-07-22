@@ -9,11 +9,12 @@
 ## 编码规范
 
 ### 规则
-1. 严格依据最新资料，遵循 Leptos 规范和实践，细粒度、信号、响应式，及同构模式
-2. view! 分支或栈溢：Either 是首选；拆分为独立组件是根本；标准库也好，禁 into_any
-3. view! 中用 t!, 禁止轻易使用 t_display, 用 td_string 须特别说明，禁 t_string
-4. match 优先于 if/else，或宏/match 的组合
-5. 禁无谓冗余克隆 clone，能避免 format 则避免
-6. 样式须级联，禁并列组件重复样式
-7. 遵循 SurrealDB 规范和实践
-8. 代码注释中文优先，英文辅助
+- 严格依据最新资料，遵循 Leptos 规范和实践，细粒度、信号、响应式，及同构模式
+- 代码抽象、复用是最基本要求，严禁重复的方法/函数定义
+- view! 分支或栈溢：Either 是首选；拆分为独立组件是根本；标准库也好，禁 into_any
+- view! 中用 t!, 禁止轻易使用 t_display, 用 td_string 须特别说明，禁 t_string
+- match 优先于 if/else，或宏/match 的组合
+- 禁无谓冗余克隆 clone，能避免 format 则避免
+- 样式须级联，禁并列组件重复样式
+- 遵循 SurrealDB 规范和实践
+- 代码注释中文优先，英文辅助
